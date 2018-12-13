@@ -1,0 +1,5 @@
+﻿<Targets ImageFile="RainCheckImages.002.jpeg">
+    <Target Name="btn1" X="2" Y="1" Width="359" Height="348" />
+    <Target Name="btn2" X="487" Y="66" Width="306" Height="264" />
+    <Target Name="btn3" X="650" Y="531" Width="282" Height="193" />
+</Targets>
