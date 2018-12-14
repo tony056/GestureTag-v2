@@ -66,7 +66,7 @@ export default class RealApp extends Component {
           const width = `${Width}px`;
           const height = `${Height}px`;
           return (
-            <GTButton key={Name} top={top} left={left} width={width} height={height}/>
+            <GTButton key={Name} top={top} left={left} width={width} height={height} name={Name}/>
           )
         }) : "Nothing"}
       </div>
