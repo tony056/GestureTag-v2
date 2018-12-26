@@ -5,6 +5,7 @@ import './App.css';
 import Home from './pages/Home';
 import List from './pages/List';
 import AppSelection from './pages/AppSelection';
+import AbstractConfig from './pages/AbstractConfig';
 import RealApp from './pages/RealApp';
 
 class App extends Component {
@@ -13,6 +14,7 @@ class App extends Component {
       <Switch>
         <Route exact path='/' component={Home} />
         <Route path='/app-selection' component={AppSelection} />
+        <Route path='/abstract-selection' component={AbstractConfig} />
         <Route path='/realistic' component={RealApp} />
       </Switch>
     );
