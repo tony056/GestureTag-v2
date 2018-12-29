@@ -1,6 +1,5 @@
 import React from 'react';
 import { Form, Input, Radio, InputNumber, Button } from 'antd';
-import { Redirect } from 'react-router-dom';
 
 export default class GTSingleConditionForm extends React.Component {
   constructor(props) {
@@ -9,11 +8,12 @@ export default class GTSingleConditionForm extends React.Component {
       targetSize: 16,
       targetSpacing: 0,
       targetNums: 5,
+      trialNums: 10,
       inputType: 'pointing',
       userId: 'testing',
-      redirect: false
     };
     this.handleNumberChange = this.handleNumberChange.bind(this);
+    this.handleTrialNumberChange = this.handleTrialNumberChange.bind(this);
     this.handleIdChange = this.handleIdChange.bind(this);
     this.handleRadioValueChange = this.handleRadioValueChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -21,6 +21,10 @@ export default class GTSingleConditionForm extends React.Component {
 
   handleNumberChange(value) {
     this.setState({ targetNums: value });
+  }
+
+  handleTrialNumberChange(value) {
+    this.setState({ trialNums: value });
   }
 
   handleIdChange(e) {
@@ -37,17 +41,9 @@ export default class GTSingleConditionForm extends React.Component {
       this.setState({ inputType: value });
   }
 
-  handleSubmit() {
-    fetch('/api/study/single', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(this.state)
-    })
-    .then(res => res.json())
-    .then(jsonObj => this.setState({ redirect: true }))
-    .catch(err => console.error(err));
+  handleSubmit(e) {
+    e.preventDefault();
+    this.props.handleSubmit(this.state);
   }
 
   render() {
@@ -55,10 +51,7 @@ export default class GTSingleConditionForm extends React.Component {
       labelCol: { span: 6 },
       wrapperCol: { span: 14 },
     };
-    const { userId, targetNums, targetSize, targetSpacing, inputType, redirect } = this.state;
-    if (redirect) {
-      return <Redirect to='/study/single' />;
-    }
+    const { userId, targetNums, targetSize, targetSpacing, inputType, trialNums } = this.state;
     return (
       <Form onSubmit={this.handleSubmit}>
         <Form.Item {...formItemLayout} label="User Id">
@@ -86,6 +79,9 @@ export default class GTSingleConditionForm extends React.Component {
         </Form.Item>
         <Form.Item {...formItemLayout} label="Number of Targets">
           <InputNumber min={5} max={300} step={10} value={targetNums} onChange={this.handleNumberChange} />
+        </Form.Item>
+        <Form.Item {...formItemLayout} label="Number of Trials">
+          <InputNumber min={1} max={20} step={1} value={trialNums} onChange={this.handleTrialNumberChange} />
         </Form.Item>
         <Form.Item
           wrapperCol={{ span: 12, offset: 6 }}

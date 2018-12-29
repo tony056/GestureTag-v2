@@ -7,6 +7,7 @@ import List from './pages/List';
 import AppSelection from './pages/AppSelection';
 import AbstractConfig from './pages/AbstractConfig';
 import RealApp from './pages/RealApp';
+import AbstractStudy from './pages/AbstractStudy';
 
 class App extends Component {
   render() {
@@ -16,6 +17,7 @@ class App extends Component {
         <Route path='/app-selection' component={AppSelection} />
         <Route path='/abstract-selection' component={AbstractConfig} />
         <Route path='/realistic' component={RealApp} />
+        <Route path='/study/single' component={AbstractStudy} />
       </Switch>
     );
   }

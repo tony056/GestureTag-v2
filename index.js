@@ -1,10 +1,11 @@
 const express = require('express');
 const path = require('path');
+const bodyParser = require('body-parser');
 const fs = require('fs');
 const parser = require('xml2json');
 const app = express();
 const port = process.env.PORT || 5000;
-
+app.use(bodyParser.json());
 const getAppFiles = (cb) => {
   console.log(`search: ${__dirname}/client/public/apps`);
   fs.readdir(__dirname + '/client/public/apps', (err, items) => {
@@ -62,6 +63,39 @@ app.get('/api/getButtons/:filename', (req, res) => {
   console.log('get filename request');
   parseXMLFile(req.params.filename, jsonObj => {
     res.json(jsonObj);
+  });
+});
+
+app.post('/api/study/single', (req, res) => {
+  console.log('get new study request');
+  const { userId, inputType, targetNums, targetSize, targetSpacing, trialNums } = req.body;
+  const time = new Date(Date.now()).toLocaleString();
+  const dirPath = `${__dirname}/study/${userId}`;
+  const fpath = `${dirPath}/info_single.json`;
+  const data = {
+    userId,
+    inputType,
+    trialNums,
+    targetNums,
+    targetSize,
+    targetSpacing,
+    time,
+  };
+  fs.access(dirPath, fs.constants.F_OK, err => {
+    if (err) {
+      fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
+        if (err) throw err;
+        console.log(`${fpath} has been saved.`);
+      });
+    } else {
+      fs.mkdir(dirPath, {}, err => {
+        fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
+          if (err) throw err;
+          console.log(`${fpath} has been saved.`);
+        });
+      });
+    }
+    res.json(data);
   });
 });
 

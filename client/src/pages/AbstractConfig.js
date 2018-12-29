@@ -3,6 +3,7 @@ import { Layout, Radio, Card } from 'antd';
 import GTMenu from '../components/GTMenu';
 import GTSingleConditionForm from '../components/GTSingleConditionForm';
 import GTSerialConditionForm from '../components/GTSerialConditionForm';
+import { Redirect } from 'react-router-dom';
 
 const { Header, Footer, Content } = Layout;
 
@@ -10,7 +11,9 @@ export default class AbstractConfig extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      formType: 'single'
+      formType: 'single',
+      redirect: false,
+      redirectInfo: null,
     };
     this.formOnChange = this.formOnChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -20,8 +23,18 @@ export default class AbstractConfig extends React.Component {
     this.setState({ formType: e.target.value });
   }
 
-  handleSubmit(e) {
-    e.preventDefault();
+  handleSubmit(data) {
+    // e.preventDefault();
+    fetch('/api/study/single', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(jsonObj => this.setState({ redirect: true, redirectInfo: jsonObj }))
+    .catch(err => console.error(err));
   }
 
   renderFormByType() {
@@ -33,8 +46,8 @@ export default class AbstractConfig extends React.Component {
   }
 
   render() {
-
-    return (
+    const { redirect, redirectInfo } = this.state;
+    return (redirect ? <Redirect push to={{ pathname: '/study/single', state: { redirectInfo } }} /> :(
       <Layout>
         <Header>
           <GTMenu status={"abstract"} />
@@ -54,6 +67,6 @@ export default class AbstractConfig extends React.Component {
           </Card>
         </Content>
       </Layout>
-    );
+    ));
   }
 };
