@@ -5,6 +5,9 @@ const fs = require('fs');
 const parser = require('xml2json');
 const app = express();
 const port = process.env.PORT || 5000;
+const utils = require('./utils/buttonGeneration');
+
+
 app.use(bodyParser.json());
 const getAppFiles = (cb) => {
   console.log(`search: ${__dirname}/client/public/apps`);
@@ -64,6 +67,12 @@ app.get('/api/getButtons/:filename', (req, res) => {
   parseXMLFile(req.params.filename, jsonObj => {
     res.json(jsonObj);
   });
+});
+
+app.post('/api/generateButtons', (req, res) => {
+  console.log('get button generation request');
+  const { userId, inputType, targetNums, targetSize, targetSpacing } = req.body;
+  utils.generateButtons(targetNums, targetSize, targetSpacing, btns => res.json(btns));
 });
 
 app.post('/api/study/single', (req, res) => {
