@@ -8,15 +8,15 @@ const BLOCK_HEIGHT = 80;
 const targetOptions = [16, 32, 48];
 const xRange = {
   min: EYE_TRACKING_WIDTH_ERROR_THRESHOLD,
-  max: window.outerWidth - 300
+  max: WIDTH - 300
 };
 
 const yRange = {
   min: EYE_TRACKING_WIDTH_ERROR_THRESHOLD,
-  max: window.outerHeight - 300
+  max: HEIGHT - 300
 };
 
-const generateButtons = (targetNums, targetSize, targetSpacing) => {
+const generateButtons = (targetNums, targetSize, targetSpacing, cb) => {
   let num = targetNums;
   const target = createTarget(targetSize);
   const { x, y } = target;
@@ -71,7 +71,7 @@ const generateButtons = (targetNums, targetSize, targetSpacing) => {
       num -= 1;
     }
   }
-  return buttons;
+  cb(buttons);
 };
 
 const createTarget = targetSize => {
@@ -132,4 +132,6 @@ const shuffle = positions => {
   return array;
 };
 
-export { generateButtons };
+module.exports = {
+  generateButtons
+};
