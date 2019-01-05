@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function GTButton({ width, height, left, top, name, click }) {
+export default function GTButton({ width, height, left, top, name, click, value }) {
   const styles = {
     left,
     top,
@@ -12,7 +12,11 @@ export default function GTButton({ width, height, left, top, name, click }) {
     background: 'rgba(255, 255, 255, 0.0)',
     float: 'left'
   };
+
+  const handleClick = () => {
+    click(value);
+  }
   return (
-    <button name={name} style={styles} onClick={click}></button>
+    <button name={name} style={styles} onClick={handleClick}></button>
   );
 }

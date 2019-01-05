@@ -8,6 +8,17 @@ const port = process.env.PORT || 5000;
 const utils = require('./utils/buttonGeneration');
 
 
+let userInfo = {
+  data_dir_path: '',
+  log_file_path: '',
+  inputType: '',
+  trialNums: 0,
+  conditions: [],
+  totalTrialNum: 0,
+  targetNums: 5,
+  completedNum: 0
+};
+
 app.use(bodyParser.json());
 const getAppFiles = (cb) => {
   console.log(`search: ${__dirname}/client/public/apps`);
@@ -30,6 +41,45 @@ const parseXMLFile = (filename, cb) => {
     const jsonObj = parser.toJson(data);
     cb(jsonObj);
   });
+};
+
+const updateFilePaths = (dir_path, log_file_path) => {
+  if (dir_path)
+    userInfo.data_dir_path = dir_path;
+  if (log_file_path)
+    userInfo.log_file_path = log_file_path;
+};
+
+const updateUserInfo = (data, dirPath, logPath, conditions) => {
+  updateFilePaths(dirPath, logPath);
+  const { trialNums, inputType, targetNums } = data;
+  addConditions(conditions);
+  userInfo.trialNums = trialNums;
+  userInfo.inputType = inputType;
+  userInfo.targetNums = targetNums;
+  userInfo.totalTrialNum = userInfo.trialNums * conditions.length;
+}
+
+const updateTrialNums = cb => {
+  if (userInfo.completedNum === userInfo.totalTrialNum) {
+    cb(true, userInfo.completedNum, userInfo.totalTrialNum);
+  }
+  userInfo.completedNum += 1;
+  if ((userInfo.completedNum) % userInfo.trialNums !== 0) {
+    console.log(`trial left: ${userInfo.completedNum % userInfo.trialNums}------------`);
+    cb(false, userInfo.completedNum, userInfo.totalTrialNum);
+  } else {
+    console.log(`trial done...................................`);
+    const len = userInfo.conditions.length;
+    if (len !== 0) {
+      userInfo.conditions.shift();
+    }
+    cb(true, userInfo.completedNum, userInfo.totalTrialNum);
+  }
+};
+
+const addConditions = conditions => {
+  userInfo.conditions = userInfo.conditions.concat(conditions);
 };
 
 // serve the static file from the React app
@@ -71,8 +121,31 @@ app.get('/api/getButtons/:filename', (req, res) => {
 
 app.post('/api/generateButtons', (req, res) => {
   console.log('get button generation request');
-  const { userId, inputType, targetNums, targetSize, targetSpacing } = req.body;
-  utils.generateButtons(targetNums, targetSize, targetSpacing, btns => res.json(btns));
+  // const { userId, inputType, targetNums, targetSize, targetSpacing } = req.body;
+  const { targetNums, conditions } = userInfo;
+  if (conditions.length !== 0) {
+    const { targetSize, targetSpacing } = conditions[0];
+    console.log(`condition: ${targetSize} ${targetSpacing}`);
+    utils.generateButtons(targetNums, targetSize, targetSpacing, btns => res.json(btns));
+  } else {
+    res.json([]);
+  }
+});
+
+app.post('/api/log', (req, res) => {
+  const { startTime, targetId, selectId, timeStamp } = req.body;
+  const msg = `${timeStamp},\t${targetId},\t${selectId},\t${startTime}\n`;
+  fs.appendFile(userInfo.log_file_path, msg, err => {
+    if (err) console.error(err);
+    console.log(`log: ${timeStamp}\t${targetId}\t${selectId}\t${startTime}\n`);
+    updateTrialNums((changeCondition, completedNum, totalTrialNum) => {
+      res.json({
+        change: changeCondition,
+        completedNum,
+        totalTrialNum
+      });
+    });
+  });
 });
 
 app.post('/api/study/single', (req, res) => {
@@ -81,6 +154,7 @@ app.post('/api/study/single', (req, res) => {
   const time = new Date(Date.now()).toLocaleString();
   const dirPath = `${__dirname}/study/${userId}`;
   const fpath = `${dirPath}/info_single.json`;
+  const logPath = `${dirPath}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
   const data = {
     userId,
     inputType,
@@ -90,6 +164,7 @@ app.post('/api/study/single', (req, res) => {
     targetSpacing,
     time,
   };
+  updateUserInfo(data, dirPath, logPath, [{ targetSize, targetSpacing: targetSpacing * targetSize }]);
   fs.access(dirPath, fs.constants.F_OK, err => {
     if (err) {
       fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {

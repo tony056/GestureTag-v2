@@ -24,22 +24,26 @@ const generateButtons = (targetNums, targetSize, targetSpacing, cb) => {
     {
       x: x + targetSpacing + targetSize,
       y,
-      targetSize
+      targetSize,
+      id: `${x + targetSpacing + targetSize}_${y}`
     },
     {
       x: x - targetSpacing - targetSize,
       y,
-      targetSize
+      targetSize,
+      id: `${x - targetSpacing - targetSize}_${y}`
     },
     {
       x,
       y: y - targetSpacing - targetSize,
-      targetSize
+      targetSize,
+      id: `${x}_${y - targetSpacing - targetSize}`
     },
     {
       x,
       y: y + targetSpacing + targetSize,
-      targetSize
+      targetSize,
+      id: `${x}_${y + targetSpacing + targetSize}`
     }
   ];
   num -= 5;
@@ -75,11 +79,11 @@ const generateButtons = (targetNums, targetSize, targetSpacing, cb) => {
 };
 
 const createTarget = targetSize => {
-  const x = Math.random() * (xRange.max - xRange.min) + xRange.min;
-  const y = Math.random() * (yRange.max - yRange.min) + yRange.min;
+  const x = Math.round(Math.random() * (xRange.max - xRange.min) + xRange.min);
+  const y = Math.round(Math.random() * (yRange.max - yRange.min) + yRange.min);
 
   return {
-    x, y, targetSize
+    x, y, targetSize, id: `${x}_${y}`
   };
 }
 
@@ -99,7 +103,8 @@ const createDistractor = (targetBlock, row, col) => {
   return {
     x: rx,
     y: ry,
-    targetSize: size
+    targetSize: size,
+    id: `${rx}_${ry}`
   };
 };
 
