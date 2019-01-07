@@ -6,12 +6,13 @@ const parser = require('xml2json');
 const app = express();
 const port = process.env.PORT || 5000;
 const utils = require('./utils/buttonGeneration');
-
+const uf = require('./utils/userInfo');
 
 let userInfo = {
   data_dir_path: '',
   log_file_path: '',
   inputType: '',
+  userId: '',
   trialNums: 0,
   conditions: [],
   totalTrialNum: 0,
@@ -50,30 +51,20 @@ const updateFilePaths = (dir_path, log_file_path) => {
     userInfo.log_file_path = log_file_path;
 };
 
-const updateUserInfo = (data, dirPath, logPath, conditions) => {
-  updateFilePaths(dirPath, logPath);
-  const { trialNums, inputType, targetNums } = data;
-  addConditions(conditions);
-  userInfo.trialNums = trialNums;
-  userInfo.inputType = inputType;
-  userInfo.targetNums = targetNums;
-  userInfo.totalTrialNum = userInfo.trialNums * conditions.length;
-}
-
 const updateTrialNums = cb => {
-  if (userInfo.completedNum === userInfo.totalTrialNum) {
-    cb(true, userInfo.completedNum, userInfo.totalTrialNum);
-  }
   userInfo.completedNum += 1;
+  if (userInfo.completedNum === userInfo.totalTrialNum) {
+    const num = userInfo.completedNum;
+    // resetTrials();
+    cb(true, num, num);
+    return;
+  }
   if ((userInfo.completedNum) % userInfo.trialNums !== 0) {
     console.log(`trial left: ${userInfo.completedNum % userInfo.trialNums}------------`);
     cb(false, userInfo.completedNum, userInfo.totalTrialNum);
   } else {
     console.log(`trial done...................................`);
-    const len = userInfo.conditions.length;
-    if (len !== 0) {
-      userInfo.conditions.shift();
-    }
+    userInfo = uf.updateUserInfoCondition(userInfo);
     cb(true, userInfo.completedNum, userInfo.totalTrialNum);
   }
 };
@@ -148,23 +139,61 @@ app.post('/api/log', (req, res) => {
   });
 });
 
-app.post('/api/study/single', (req, res) => {
-  console.log('get new study request');
-  const { userId, inputType, targetNums, targetSize, targetSpacing, trialNums } = req.body;
+app.post('/api/study/multiple', (req, res) => {
+  console.log('get new serial study request');
+  const { userId, inputType, targetNums, trialNums, selectedItems } = req.body;
   const time = new Date(Date.now()).toLocaleString();
   const dirPath = `${__dirname}/study/${userId}`;
-  const fpath = `${dirPath}/info_single.json`;
-  const logPath = `${dirPath}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
+  const fpath = `${dirPath}/info_${inputType}.json`;
+  //const logPath = `${dirPath}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
+
+  const conditions = selectedItems.map(item => {
+    const [targetSize, targetSpacing] = item.split('-');
+    return { targetSize: parseInt(targetSize), targetSpacing: parseFloat(targetSpacing) * parseInt(targetSize) };
+  });
   const data = {
     userId,
     inputType,
     trialNums,
     targetNums,
-    targetSize,
-    targetSpacing,
+    conditions,
     time,
   };
-  updateUserInfo(data, dirPath, logPath, [{ targetSize, targetSpacing: targetSpacing * targetSize }]);
+  userInfo = uf.initUserInfoWithData(data, __dirname);
+  fs.access(dirPath, fs.constants.F_OK, err => {
+    if (err) {
+      fs.mkdir(dirPath, {}, err => {
+        fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
+          if (err) throw err;
+          console.log(`${fpath} has been saved.`);
+        });
+      });
+    } else {
+      fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
+        if (err) throw err;
+        console.log(`${fpath} has been saved.`);
+      });
+    }
+    res.json(data);
+  });
+});
+
+app.post('/api/study/single', (req, res) => {
+  console.log('get new single study request');
+  const { userId, inputType, targetNums, targetSize, targetSpacing, trialNums } = req.body;
+  const time = new Date(Date.now()).toLocaleString();
+  const dirPath = `${__dirname}/study/${userId}`;
+  const fpath = `${dirPath}/info_${inputType}.json`;
+  // const logPath = `${dirPath}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
+  const data = {
+    userId,
+    inputType,
+    trialNums,
+    targetNums,
+    conditions: [{ targetSize, targetSpacing: targetSpacing * targetSize }],
+    time,
+  };
+  userInfo = initUserInfoWithData(data, __dirname);
   fs.access(dirPath, fs.constants.F_OK, err => {
     if (err) {
       fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {

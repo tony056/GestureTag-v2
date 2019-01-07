@@ -23,9 +23,9 @@ export default class AbstractConfig extends React.Component {
     this.setState({ formType: e.target.value });
   }
 
-  handleSubmit(data) {
+  handleSubmit(data, url) {
     // e.preventDefault();
-    fetch('/api/study/single', {
+    fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -42,7 +42,7 @@ export default class AbstractConfig extends React.Component {
     if (formType === 'single')
       return <GTSingleConditionForm  handleSubmit={this.handleSubmit} />;
     else if (formType === 'multiple')
-      return <GTSerialConditionForm />;
+      return <GTSerialConditionForm handleSubmit={this.handleSubmit} />;
   }
 
   render() {

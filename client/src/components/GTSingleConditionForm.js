@@ -43,7 +43,7 @@ export default class GTSingleConditionForm extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
-    this.props.handleSubmit(this.state);
+    this.props.handleSubmit(this.state, '/api/study/single');
   }
 
   render() {
