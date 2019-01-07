@@ -73,6 +73,25 @@ const addConditions = conditions => {
   userInfo.conditions = userInfo.conditions.concat(conditions);
 };
 
+const createUserDir = (dirPath, fpath, data, res) => {
+  fs.access(dirPath, fs.constants.F_OK, err => {
+    if (err) {
+      fs.mkdir(dirPath, {}, err => {
+        fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
+          if (err) throw err;
+          console.log(`${fpath} has been saved.`);
+        });
+      });
+    } else {
+      fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
+        if (err) throw err;
+        console.log(`${fpath} has been saved.`);
+      });
+    }
+    res.json(data);
+  });
+};
+
 // serve the static file from the React app
 app.use(express.static(path.join(__dirname, 'client/public')));
 
@@ -160,22 +179,7 @@ app.post('/api/study/multiple', (req, res) => {
     time,
   };
   userInfo = uf.initUserInfoWithData(data, __dirname);
-  fs.access(dirPath, fs.constants.F_OK, err => {
-    if (err) {
-      fs.mkdir(dirPath, {}, err => {
-        fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
-          if (err) throw err;
-          console.log(`${fpath} has been saved.`);
-        });
-      });
-    } else {
-      fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
-        if (err) throw err;
-        console.log(`${fpath} has been saved.`);
-      });
-    }
-    res.json(data);
-  });
+  createUserDir(dirPath, fpath, data, res);
 });
 
 app.post('/api/study/single', (req, res) => {
@@ -194,22 +198,7 @@ app.post('/api/study/single', (req, res) => {
     time,
   };
   userInfo = initUserInfoWithData(data, __dirname);
-  fs.access(dirPath, fs.constants.F_OK, err => {
-    if (err) {
-      fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
-        if (err) throw err;
-        console.log(`${fpath} has been saved.`);
-      });
-    } else {
-      fs.mkdir(dirPath, {}, err => {
-        fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
-          if (err) throw err;
-          console.log(`${fpath} has been saved.`);
-        });
-      });
-    }
-    res.json(data);
-  });
+  createUserDir(dirPath, fpath, data, res);
 });
 
 
