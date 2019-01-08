@@ -14,7 +14,7 @@ export default class GTStudySwitch extends React.Component {
               <Card
                 hoverable
                 style={{ width: '100%' }}
-                cover={<img alt="Abstract UI Study" src="https://via.placeholder.com/400x300.png" />}
+                cover={<img alt="Abstract UI Study" src="/images/abstract.png" />}
               >
                 <Meta
                   title="Abstract UI Study"
@@ -28,7 +28,7 @@ export default class GTStudySwitch extends React.Component {
               <Card
                 hoverable
                 style={{ width: '100%' }}
-                cover={<img alt="Abstract UI Study" src="https://via.placeholder.com/400x300.png" />}
+                cover={<img alt="Abstract UI Study" src="/apps/msword.png" />}
               >
                 <Meta
                   title="Realistic UI Study"
