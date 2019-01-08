@@ -3,6 +3,7 @@ import { Modal } from 'antd';
 import GTButton from '../components/GTButton';
 import GTTrialModal from '../components/GTTrialModal';
 import GTTrialPrepModalContent from '../components/GTTrialPrepModalContent';
+import { Redirect } from 'react-router-dom';
 
 export default class AbstractStudy extends React.Component {
   constructor(props) {
@@ -18,7 +19,8 @@ export default class AbstractStudy extends React.Component {
       completedNum: 0,
       trialNums: 0,
       totalTrialNum: 10,
-      inputType: ''
+      inputType: '',
+      redirect: false
     };
     this.startTime = null;
     this.startTrial = this.startTrial.bind(this);
@@ -52,7 +54,7 @@ export default class AbstractStudy extends React.Component {
     if (prepCompleted || conditionDone) {
       this.updateTargets((btns) => {
         if (completedNum === totalTrialNum)
-          this.setState({ visible: false, buttons: [], conditionDone: false });
+          this.setState({ visible: false, buttons: [], conditionDone: false, redirect: true });
         else
           this.setState({ visible: false, buttons: btns, conditionDone: false });
       });
@@ -167,9 +169,9 @@ export default class AbstractStudy extends React.Component {
   }
 
   render() {
-    const { buttons } = this.state;
+    const { buttons, redirect } = this.state;
 
-    return (
+    return (redirect ? <Redirect push to="/" /> : (
       <div>
         <div>
           {(buttons && buttons.length > 0 ? buttons.map((btn, i) => {
@@ -185,6 +187,6 @@ export default class AbstractStudy extends React.Component {
         </div>
         {this.displayModal()}
       </div>
-    );
+    ));
   }
 }
