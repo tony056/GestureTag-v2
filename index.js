@@ -197,7 +197,7 @@ app.post('/api/study/single', (req, res) => {
     conditions: [{ targetSize, targetSpacing: targetSpacing * targetSize }],
     time,
   };
-  userInfo = initUserInfoWithData(data, __dirname);
+  userInfo = uf.initUserInfoWithData(data, __dirname);
   createUserDir(dirPath, fpath, data, res);
 });
 

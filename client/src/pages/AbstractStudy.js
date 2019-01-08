@@ -179,7 +179,7 @@ export default class AbstractStudy extends React.Component {
             const width = `${targetSize}px`;
             const height = `${targetSize}px`;
             return (
-              <GTButton key={id} value={id} top={top} left={left} width={width} height={height} name={id} click={this.targetSelected}/>
+              <GTButton key={id} styleId={i === 0 ? i : 1} value={id} top={top} left={left} width={width} height={height} name={id} click={this.targetSelected}/>
             )
           }) : <p>Nothing to show...</p>)}
         </div>
