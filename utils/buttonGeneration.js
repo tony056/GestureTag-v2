@@ -16,6 +16,18 @@ const yRange = {
   max: HEIGHT - 300
 };
 
+const dummyButtons = (targetNums, cb) => {
+  const btns = range(targetNums).map(d => {
+    return {
+      x: 0,
+      y: 0,
+      targetSize: 0,
+      id: d
+    };
+  });
+  cb(btns);
+}
+
 const generateButtons = (targetNums, targetSize, targetSpacing, cb) => {
   let num = targetNums;
   const target = createTarget(targetSize);
@@ -83,7 +95,7 @@ const createTarget = targetSize => {
   const y = Math.round(Math.random() * (yRange.max - yRange.min) + yRange.min);
 
   return {
-    x, y, targetSize, id: `${x}_${y}`
+    x, y, targetSize, id: `${x}_${y}`, key: 'target'
   };
 }
 
@@ -138,5 +150,6 @@ const shuffle = positions => {
 };
 
 module.exports = {
-  generateButtons
+  generateButtons,
+  dummyButtons
 };
