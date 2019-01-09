@@ -79,7 +79,7 @@ const createUserDir = (dirPath, fpath, data, res) => {
       fs.mkdir(dirPath, {}, err => {
         fs.writeFile(fpath, JSON.stringify(data, null, 2), err => {
           if (err) throw err;
-          console.log(`${fpath} has been saved.`);
+          console.log(`${fpath} has been saved. dir created`);
         });
       });
     } else {
@@ -138,7 +138,7 @@ app.post('/api/generateButtons', (req, res) => {
     console.log(`condition: ${targetSize} ${targetSpacing}`);
     utils.generateButtons(targetNums, targetSize, targetSpacing, btns => res.json(btns));
   } else {
-    res.json([]);
+    utils.dummyButtons(targetNums, btns => res.json(btns));
   }
 });
 

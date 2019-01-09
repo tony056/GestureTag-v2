@@ -4,6 +4,17 @@ import GTButton from '../components/GTButton';
 import GTTrialModal from '../components/GTTrialModal';
 import GTTrialPrepModalContent from '../components/GTTrialPrepModalContent';
 import { Redirect } from 'react-router-dom';
+import { Animate } from 'react-move';
+
+const separateBtnsNTarget = btns => {
+  const t = btns.shift();
+  const target = {...t};
+  target.key = 'target';
+  return {
+    target,
+    buttons: btns
+  };
+};
 
 export default class AbstractStudy extends React.Component {
   constructor(props) {
@@ -12,6 +23,12 @@ export default class AbstractStudy extends React.Component {
     const fh = window.innerHeight === window.screen.height;
     this.state = {
       buttons: [],
+      targetButton: {
+        key: 'target',
+        x: 0,
+        y: 0,
+        targetSize: 0
+      },
       fullscreen: fw && fh,
       inputConnected: false,
       conditionDone: false,
@@ -44,7 +61,7 @@ export default class AbstractStudy extends React.Component {
   }
 
   componentDidUpdate(props) {
-    this.startTime = Date.now();
+    // this.startTime = Date.now();
   }
 
   startTrial(e) {
@@ -53,10 +70,11 @@ export default class AbstractStudy extends React.Component {
     const prepCompleted = fullscreen && inputConnected;
     if (prepCompleted || conditionDone) {
       this.updateTargets((btns) => {
+        const { target, buttons } = separateBtnsNTarget(btns);
         if (completedNum === totalTrialNum)
-          this.setState({ visible: false, buttons: [], conditionDone: false, redirect: true });
+          this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0 });
         else
-          this.setState({ visible: false, buttons: btns, conditionDone: false });
+          this.setState({ visible: false, buttons, targetButton: target, conditionDone: false });
       });
     }
   }
@@ -68,7 +86,7 @@ export default class AbstractStudy extends React.Component {
   targetSelected(selectId) {
     // post request to http server with data
     const timeStamp = Date.now();
-    const targetId = this.state.buttons[0].id;
+    const targetId = this.state.targetButton.id;
     const { startTime } = this;
     fetch('/api/log', {
       method: 'POST',
@@ -89,7 +107,8 @@ export default class AbstractStudy extends React.Component {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
       } else {
         this.updateTargets(btns => {
-          this.setState({ buttons: btns, completedNum, totalTrialNum });
+          const { target, buttons } = separateBtnsNTarget(btns);
+          this.setState({ buttons, targetButton: target, completedNum, totalTrialNum });
         });
       }
     })
@@ -97,7 +116,8 @@ export default class AbstractStudy extends React.Component {
   }
 
   setFullscreenStatus() {
-    const fullscreen = (window.innerWidth === window.screen.width) && (window.innerHeight === window.screen.height);
+    //const fullscreen = (window.innerWidth === window.screen.width) && (window.innerHeight === window.screen.height);
+    const fullscreen = true;
     // const { inputConnected } = this.state;
     const isConnected = this.checkInputConnection();
     this.setState({ fullscreen, inputConnected: isConnected });
@@ -169,21 +189,49 @@ export default class AbstractStudy extends React.Component {
   }
 
   render() {
-    const { buttons, redirect } = this.state;
-
+    const { buttons, redirect, targetButton } = this.state;
     return (redirect ? <Redirect push to="/" /> : (
       <div>
         <div>
-          {(buttons && buttons.length > 0 ? buttons.map((btn, i) => {
-            const { x, y, targetSize, id } = btn;
-            const top = `${y}px`;
-            const left = `${x}px`;
-            const width = `${targetSize}px`;
-            const height = `${targetSize}px`;
-            return (
-              <GTButton key={id} styleId={i === 0 ? i : 1} value={id} top={top} left={left} width={width} height={height} name={id} click={this.targetSelected}/>
-            )
-          }) : <p>Nothing to show...</p>)}
+            <Animate
+              key={targetButton.key}
+              start={{ x: targetButton.x, y: targetButton.y, width: targetButton.targetSize, height: targetButton.targetSize }}
+              update={{
+                x: [targetButton.x],
+                y: [targetButton.y],
+                width: [targetButton.targetSize],
+                height: [targetButton.targetSize],
+                timing: {
+                  duration: 700
+                },
+                events: { end: () => { this.startTime = Date.now(); }}
+              }}
+            >
+            {({ x, y, width, height }) => {
+              return (
+                  <GTButton
+                    key={targetButton.id}
+                    styleId={0}
+                    value={targetButton.id}
+                    top={`${y}px`}
+                    left={`${x}px`}
+                    width={`${width}px`}
+                    height={`${height}px`}
+                    name={targetButton.id}
+                    click={this.targetSelected}
+                  />
+              );
+            }}
+          </Animate>
+          {(buttons && buttons.length > 0 ?
+            buttons.map((btn, i) => {
+              const { x, y, targetSize, id } = btn;
+              const top = `${y}px`;
+              const left = `${x}px`;
+              const widthPx = `${targetSize}px`;
+              const heightPx = `${targetSize}px`;
+              return (<GTButton key={id} styleId={1} value={id} top={top} left={left} width={widthPx} height={heightPx} name={id} click={this.targetSelected}/>);
+            }) : <p>Waiting...</p>)}
         </div>
         {this.displayModal()}
       </div>
