@@ -1,6 +1,5 @@
 import React from 'react';
 import { List, Card } from 'antd';
-import { Link } from 'react-router-dom';
 
 const { Meta } = Card;
 
@@ -19,18 +18,16 @@ export default function GTAppList({ apps, click }) {
       dataSource={apps}
       renderItem={item => (
         <List.Item>
-          <Link to={{ pathname: './realistic', state: { item } }}>
-            <Card
-              hoverable
-              onClick={e => click(e, item.name)}
-              name={item.name}
-              cover={<img alt={item.name} src={item.img_source} />}
-            >
-              <Meta
-                title={item.name}
-              />
-            </Card>
-          </Link>
+          <Card
+            hoverable
+            onClick={e => click(e, item)}
+            name={item.name}
+            cover={<img alt={item.name} src={item.img_source} />}
+          >
+            <Meta
+              title={item.name}
+            />
+          </Card>
         </List.Item>
       )}
     />
