@@ -21,7 +21,7 @@ export default class GTMenu extends Component {
     if (current !== key) {
       return (
           <Menu.Item key={key}>
-            <Link push to={link}>
+            <Link to={link}>
               {content}
             </Link>
           </Menu.Item>

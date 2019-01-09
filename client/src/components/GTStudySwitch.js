@@ -10,7 +10,7 @@ export default class GTStudySwitch extends React.Component {
       <div style={{ padding: '10%' }}>
         <Row gutter={48}>
           <Col span={12}>
-            <Link push to="/abstract-selection">
+            <Link to="/abstract-selection">
               <Card
                 hoverable
                 style={{ width: '100%' }}
@@ -24,7 +24,7 @@ export default class GTStudySwitch extends React.Component {
             </Link>
           </Col>
           <Col span={12}>
-            <Link push to="/app-selection">
+            <Link to="/app-selection">
               <Card
                 hoverable
                 style={{ width: '100%' }}
