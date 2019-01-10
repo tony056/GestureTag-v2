@@ -1,10 +1,5 @@
 import React from 'react';
-import { Modal } from 'antd';
-import GTButton from '../components/GTButton';
-import GTTrialModal from '../components/GTTrialModal';
-import GTTrialPrepModalContent from '../components/GTTrialPrepModalContent';
-import { Redirect } from 'react-router-dom';
-import { Animate } from 'react-move';
+import StudyPage from './StudyPage';
 
 const separateBtnsNTarget = btns => {
   const t = btns.shift();
@@ -19,64 +14,49 @@ const separateBtnsNTarget = btns => {
 export default class AbstractStudy extends React.Component {
   constructor(props) {
     super(props);
-    const fw = window.innerWidth === window.screen.width;
-    const fh = window.innerHeight === window.screen.height;
     this.state = {
       buttons: [],
       targetButton: {
         key: 'target',
         x: 0,
         y: 0,
-        targetSize: 0
+        w: 0,
+        h: 0,
       },
-      fullscreen: fw && fh,
-      inputConnected: false,
       conditionDone: false,
-      visible: !(fw && fh),
       completedNum: 0,
-      trialNums: 0,
       totalTrialNum: 10,
       inputType: '',
-      redirect: false
+      redirect: false,
+      visible: true
     };
     this.startTime = null;
     this.startTrial = this.startTrial.bind(this);
     this.cancelTrial = this.cancelTrial.bind(this);
-    this.setFullscreenStatus = this.setFullscreenStatus.bind(this);
-    this.checkInputConnection = this.checkInputConnection.bind(this);
     this.updateTargets = this.updateTargets.bind(this);
     this.targetSelected = this.targetSelected.bind(this);
-    this.displayModal = this.displayModal.bind(this);
+    this.updateStartTime = this.updateStartTime.bind(this);
   }
 
   componentDidMount() {
-    window.addEventListener('resize', this.setFullscreenStatus);
     const { redirectInfo } = this.props.location.state;
     const { inputType } = redirectInfo;
     this.setState({ inputType });
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.setFullscreenStatus);
-  }
-
-  componentDidUpdate(props) {
-    // this.startTime = Date.now();
+  updateStartTime() {
+    this.startTime = Date.now();
   }
 
   startTrial(e) {
-    // this.updateTargets();
-    const { fullscreen, inputConnected, conditionDone, completedNum, totalTrialNum } = this.state;
-    const prepCompleted = fullscreen && inputConnected;
-    if (prepCompleted || conditionDone) {
-      this.updateTargets((btns) => {
-        const { target, buttons } = separateBtnsNTarget(btns);
-        if (completedNum === totalTrialNum)
-          this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0 });
-        else
-          this.setState({ visible: false, buttons, targetButton: target, conditionDone: false });
-      });
-    }
+    const { completedNum, totalTrialNum } = this.state;
+    this.updateTargets((btns) => {
+      const { target, buttons } = separateBtnsNTarget(btns);
+      if (completedNum === totalTrialNum)
+        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0 });
+      else
+        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false });
+    });
   }
 
   cancelTrial(e) {
@@ -88,6 +68,7 @@ export default class AbstractStudy extends React.Component {
     const timeStamp = Date.now();
     const targetId = this.state.targetButton.id;
     const { startTime } = this;
+    console.log(`click:${selectId}, ${startTime}`);
     fetch('/api/log', {
       method: 'POST',
       headers: {
@@ -115,65 +96,6 @@ export default class AbstractStudy extends React.Component {
     .catch(err => console.error(err));
   }
 
-  setFullscreenStatus() {
-    //const fullscreen = (window.innerWidth === window.screen.width) && (window.innerHeight === window.screen.height);
-    const fullscreen = true;
-    // const { inputConnected } = this.state;
-    const isConnected = this.checkInputConnection();
-    this.setState({ fullscreen, inputConnected: isConnected });
-  }
-
-  displayModal() {
-    const { fullscreen, inputConnected, conditionDone, visible, completedNum, totalTrialNum } = this.state;
-    const prepCompleted = fullscreen && inputConnected;
-    //const visible = prepCompleted || conditionDone;
-    let title = '';
-    let onOk = null;
-    let onCancel = null;
-    let okButtonProps = null;
-    let okText = 'OK';
-    let cancelButtonProps = null;
-    if (conditionDone) {
-      title = 'Done!';
-      onOk = this.startTrial;
-      okText = completedNum === totalTrialNum ? 'Done' : 'Next';
-      cancelButtonProps = { disabled: true };
-      // display modal with condtion done info
-      //return <GTTrialModal visible={trialVisble} title="Done" completedNum={0} totalTrialNum={0} handleOk={this.startTrial} />
-    } else {
-      // display prep modal
-      title = 'Trial Preparation';
-      onOk = this.startTrial;
-      onCancel = this.cancelTrial;
-      okButtonProps = { disabled: !prepCompleted };
-    }
-    return (
-      <Modal
-        visible={visible}
-        title={title}
-        onOk={onOk}
-        onCancel={onCancel}
-        okButtonProps={okButtonProps}
-        cancelButtonProps={cancelButtonProps}
-        okText={okText}
-      >
-        {!conditionDone ?
-          <GTTrialPrepModalContent fullscreen={fullscreen} inputConnected={inputConnected} />
-          : <GTTrialModal completedNum={completedNum} totalTrialNum={totalTrialNum} />}
-      </Modal>
-    );
-  }
-
-  checkInputConnection() {
-    const { inputType } = this.state;
-    if (inputType === 'pointing') {
-      return true;
-    } else {
-      // TODO: figure out how to check
-    }
-    return false;
-  }
-
   updateTargets(cb) {
     // const { targetNums, targetSize, targetSpacing, userId } = this.state;
     fetch('/api/generateButtons', {
@@ -189,52 +111,24 @@ export default class AbstractStudy extends React.Component {
   }
 
   render() {
-    const { buttons, redirect, targetButton } = this.state;
-    return (redirect ? <Redirect push to="/" /> : (
-      <div>
-        <div>
-            <Animate
-              key={targetButton.key}
-              start={{ x: targetButton.x, y: targetButton.y, width: targetButton.targetSize, height: targetButton.targetSize }}
-              update={{
-                x: [targetButton.x],
-                y: [targetButton.y],
-                width: [targetButton.targetSize],
-                height: [targetButton.targetSize],
-                timing: {
-                  duration: 700
-                },
-                events: { end: () => { this.startTime = Date.now(); }}
-              }}
-            >
-            {({ x, y, width, height }) => {
-              return (
-                  <GTButton
-                    key={targetButton.id}
-                    styleId={0}
-                    value={targetButton.id}
-                    top={`${y}px`}
-                    left={`${x}px`}
-                    width={`${width}px`}
-                    height={`${height}px`}
-                    name={targetButton.id}
-                    click={this.targetSelected}
-                  />
-              );
-            }}
-          </Animate>
-          {(buttons && buttons.length > 0 ?
-            buttons.map((btn, i) => {
-              const { x, y, targetSize, id } = btn;
-              const top = `${y}px`;
-              const left = `${x}px`;
-              const widthPx = `${targetSize}px`;
-              const heightPx = `${targetSize}px`;
-              return (<GTButton key={id} styleId={1} value={id} top={top} left={left} width={widthPx} height={heightPx} name={id} click={this.targetSelected}/>);
-            }) : <p>Waiting...</p>)}
-        </div>
-        {this.displayModal()}
-      </div>
-    ));
+    const { buttons, targetButton, visible, conditionDone, redirect, completedNum, totalTrialNum, inputType } = this.state;
+    return (
+      <StudyPage
+        bgStyle={{}}
+        targetStyleId={0}
+        buttonStyleId={1}
+        targetButton={targetButton}
+        buttons={buttons}
+        targetSelected={this.targetSelected}
+        visible={visible}
+        redirect={redirect}
+        completedNum={completedNum}
+        totalTrialNum={totalTrialNum}
+        conditionDone={conditionDone}
+        inputType={inputType}
+        startTrial={this.startTrial}
+        updateStartTime={this.updateStartTime}
+      />
+    );
   }
 }
