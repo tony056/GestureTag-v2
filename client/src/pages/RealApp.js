@@ -1,15 +1,31 @@
 import React, { Component } from 'react';
-import GTButton from '../components/GTButton';
+import StudyPage from './StudyPage';
 
 export default class RealApp extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
-    this.updateButtons = this.updateButtons.bind(this);
-    this.getButtonsFromServer = this.getButtonsFromServer.bind(this);
     this.state = {
+      targetButton: {
+        x: 0,
+        y: 0,
+        w: 0,
+        h: 0,
+        id: '0'
+      },
       buttons: [],
-      isLoading: false,
+      conditionDone: false,
+      completedNum: 0,
+      totalTrialNum: 10,
+      inputType: '',
+      redirect: false,
+      visible: true
     };
+    this.startTime = null;
+    this.getButtonsFromServer = this.getButtonsFromServer.bind(this);
+    this.updateTargets = this.updateTargets.bind(this);
+    this.targetSelected = this.targetSelected.bind(this);
+    this.updateStartTime = this.updateStartTime.bind(this);
+    this.startTrial = this.startTrial.bind(this);
   }
 
   getButtonsFromServer(filename) {
@@ -19,10 +35,21 @@ export default class RealApp extends Component {
     fetch(`/api/getButtons/${filename}`)
     .then(res => res.json())
     .then(jsonObj => {
-      //console.log(typeof jsonObj);
-      this.updateButtons(JSON.parse(jsonObj));
+      console.log('init buttons done');
+      // this.updateButtons(JSON.parse(jsonObj));
     })
     .catch(err => console.error(err));
+  }
+
+  startTrial() {
+    const { completedNum, totalTrialNum } = this.state;
+    this.updateTargets(btns => {
+      const { target, buttons } = btns;
+      if (completedNum === totalTrialNum)
+        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0 });
+      else
+        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false });
+    });
   }
 
   updateButtons(fileObj) {
@@ -36,8 +63,24 @@ export default class RealApp extends Component {
   }
 
   componentDidMount() {
-    const { xml_source } = this.props.location.state.item;
-    this.getButtonsFromServer(xml_source);
+    const { item, inputType, trialNums, userId } = this.props.location.state;
+    this.getButtonsFromServer(item.xml_source);
+    fetch('/api/study/realistic', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        trialNums,
+        inputType,
+        app: item.name
+      })
+    }).then(res => res.json())
+    .then(jsonObj => console.log(JSON.stringify(jsonObj)))
+    .catch(err => console.error(err));
+    this.setState({ inputType });
+    // post to init user info
   }
 
   componentWillMount() {
@@ -45,8 +88,46 @@ export default class RealApp extends Component {
     document.getElementById('root').style.height = "100%";
   }
 
-  componentWillUnmount() {
+  updateTargets(cb) {
+    fetch('/api/getTarget')
+    .then(res => res.json())
+    .then(jsonObj => cb(jsonObj))
+    .catch(err => console.error(err));
+  }
 
+  updateStartTime() {
+    this.startTime = Date.now();
+  }
+
+  targetSelected(selectId) {
+    const timeStamp = Date.now();
+    const targetId = this.state.targetButton.id;
+    const { startTime } = this;
+    fetch('/api/log', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        timeStamp,
+        startTime,
+        targetId,
+        selectId
+      }),
+    })
+    .then(res => res.json())
+    .then(jsonRes => {
+      const { completedNum, totalTrialNum } = jsonRes;
+      if (jsonRes.change) {
+        this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
+      } else {
+        this.updateTargets(btns => {
+          const { target, buttons } = btns;
+          this.setState({ buttons, targetButton: target, completedNum, totalTrialNum });
+        });
+      }
+    })
+    .catch(err => console.error(err));
   }
 
   render() {
@@ -56,20 +137,25 @@ export default class RealApp extends Component {
       backgroundImage: `url(${img_source})`,
       height: "100%",
     };
-    const { buttons } = this.state;
+    const { buttons, targetButton, visible, conditionDone, redirect, completedNum, totalTrialNum, inputType } = this.state;
     return (
-      <div style={bgStyle}>
-        {(buttons && buttons.length > 0) ? buttons.map(btn => {
-          const { X, Y, Width, Height, Name } = btn;
-          const top = `${Y}px`;
-          const left = `${X}px`;
-          const width = `${Width}px`;
-          const height = `${Height}px`;
-          return (
-            <GTButton key={Name} top={top} left={left} width={width} height={height} name={Name}/>
-          )
-        }) : "Nothing"}
-      </div>
+      <StudyPage
+        bgStyle={bgStyle}
+        updateTargets={this.updateTargets}
+        targetStyleId={3}
+        buttonStyleId={2}
+        targetButton={targetButton}
+        buttons={buttons}
+        targetSelected={this.targetSelected}
+        visible={visible}
+        redirect={redirect}
+        completedNum={completedNum}
+        totalTrialNum={totalTrialNum}
+        conditionDone={conditionDone}
+        inputType={inputType}
+        startTrial={this.startTrial}
+        updateStartTime={this.updateStartTime}
+      />
     );
   }
 };

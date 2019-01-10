@@ -174,7 +174,7 @@ export default class StudyPage extends React.Component {
     return (redirect ? <Redirect push to="/" /> : (
       <div style={bgStyle}>
         <Animate
-          key={targetButton.key}
+          key={'target'}
           start={{ x: targetButton.x, y: targetButton.y, width: targetButton.w, height: targetButton.h }}
           update={{
             x: [targetButton.x],

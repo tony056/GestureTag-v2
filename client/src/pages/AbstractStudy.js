@@ -68,7 +68,6 @@ export default class AbstractStudy extends React.Component {
     const timeStamp = Date.now();
     const targetId = this.state.targetButton.id;
     const { startTime } = this;
-    console.log(`click:${selectId}, ${startTime}`);
     fetch('/api/log', {
       method: 'POST',
       headers: {

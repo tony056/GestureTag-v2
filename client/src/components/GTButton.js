@@ -44,7 +44,9 @@ export default function GTButton({ width, height, left, top, name, click, value,
       height,
       position: 'absolute',
       zIndex: 100,
-      float: 'left'
+      float: 'left',
+      borderStyle: 'none',
+      background: 'rgba(43, 91, 159, 0.0)'
     }
   };
 

@@ -20,6 +20,8 @@ let userInfo = {
   completedNum: 0
 };
 
+let staticButtons = [];
+
 app.use(bodyParser.json());
 const getAppFiles = (cb) => {
   console.log(`search: ${__dirname}/client/public/apps`);
@@ -125,8 +127,16 @@ app.get('/api/getApps', (req, res) => {
 app.get('/api/getButtons/:filename', (req, res) => {
   console.log('get filename request');
   parseXMLFile(req.params.filename, jsonObj => {
-    res.json(jsonObj);
+    staticButtons = utils.convertBtnLabelsToButtons(jsonObj);
+    res.json(staticButtons);
   });
+});
+
+app.get('/api/getTarget', (req, res) => {
+  console.log('get a new target');
+  if (staticButtons && staticButtons.length > 0) {
+    res.json(utils.chooseTargetRandomly(staticButtons));
+  }
 });
 
 app.post('/api/generateButtons', (req, res) => {
@@ -163,7 +173,7 @@ app.post('/api/study/multiple', (req, res) => {
   const { userId, inputType, targetNums, trialNums, selectedItems } = req.body;
   const time = new Date(Date.now()).toLocaleString();
   const dirPath = `${__dirname}/study/${userId}`;
-  const fpath = `${dirPath}/info_${inputType}.json`;
+  const fpath = `${dirPath}/info_${inputType}_multiple_abstract.json`;
   //const logPath = `${dirPath}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
 
   const conditions = selectedItems.map(item => {
@@ -187,7 +197,7 @@ app.post('/api/study/single', (req, res) => {
   const { userId, inputType, targetNums, targetSize, targetSpacing, trialNums } = req.body;
   const time = new Date(Date.now()).toLocaleString();
   const dirPath = `${__dirname}/study/${userId}`;
-  const fpath = `${dirPath}/info_${inputType}.json`;
+  const fpath = `${dirPath}/info_${inputType}_single_abstract.json`;
   // const logPath = `${dirPath}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
   const data = {
     userId,
@@ -198,6 +208,24 @@ app.post('/api/study/single', (req, res) => {
     time,
   };
   userInfo = uf.initUserInfoWithData(data, __dirname);
+  createUserDir(dirPath, fpath, data, res);
+});
+
+app.post('/api/study/realistic', (req, res) => {
+  console.log('get new realistic app request');
+  const { userId, inputType, trialNums, app } = req.body;
+  const time = new Date(Date.now()).toLocaleString();
+  const dirPath = `${__dirname}/study/${userId}`;
+  const fpath = `${dirPath}/info_${inputType}_${app}.json`;
+  const data = {
+    userId,
+    inputType,
+    trialNums,
+    time,
+    app
+  };
+  // init user info state
+  userInfo = uf.initUserInfoWithRealisticApp(data, __dirname);
   createUserDir(dirPath, fpath, data, res);
 });
 

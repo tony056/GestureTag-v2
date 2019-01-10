@@ -48,8 +48,19 @@ const initUserInfoWithData = ({ userId, inputType, trialNums, targetNums, condit
   return newUserInfo;
 };
 
+const initUserInfoWithRealisticApp = (data, dir_root) => {
+  let newUserInfo = {...data};
+  newUserInfo.completedNum = 0;
+  newUserInfo.totalTrialNum = data.trialNums;
+  newUserInfo.data_dir_path = `${dir_root}/study/${data.userId}`;
+  const { data_dir_path, userId, inputType, app } = newUserInfo;
+  newUserInfo.log_file_path = `${data_dir_path}/${userId}_${app}_${inputType}.log`;
+  return newUserInfo;
+}
+
 module.exports = {
   initUserInfoWithData,
+  initUserInfoWithRealisticApp,
   initUserInfo,
   updateUserInfoCondition
 };

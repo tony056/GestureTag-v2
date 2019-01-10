@@ -21,12 +21,41 @@ const dummyButtons = (targetNums, cb) => {
     return {
       x: 0,
       y: 0,
-      targetSize: 0,
+      w: 0,
+      h:0,
       id: d
     };
   });
   cb(btns);
 }
+
+const convertBtnLabelsToButtons = (jsonObj) => {
+  const { Targets } = JSON.parse(jsonObj);
+  // console.log(JSON.stringify(jsonObj));
+  if (!Targets) {
+    console.log('error parsing');
+    return;
+  }
+  return Targets.Target.map((btn, i) => {
+    const { X, Y, Width, Height, Name } = btn;
+    return {
+      x: X,
+      y: Y,
+      w: Width,
+      h: Height,
+      id: Name
+    };
+  });
+}
+
+const chooseTargetRandomly = (buttons) => {
+  const targetIndex = Math.floor(Math.random() * buttons.length);
+  const newBtns = buttons.slice(0, targetIndex).concat(buttons.slice(targetIndex + 1));
+  return {
+    target: buttons[targetIndex],
+    buttons: newBtns
+  };
+};
 
 const generateButtons = (targetNums, targetSize, targetSpacing, cb) => {
   let num = targetNums;
@@ -156,5 +185,7 @@ const shuffle = positions => {
 
 module.exports = {
   generateButtons,
-  dummyButtons
+  dummyButtons,
+  convertBtnLabelsToButtons,
+  chooseTargetRandomly
 };
