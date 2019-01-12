@@ -6,6 +6,9 @@ import { Animate } from 'react-move';
 import GTButton from '../components/GTButton';
 import GTTrialModal from '../components/GTTrialModal';
 import GTTrialPrepModalContent from '../components/GTTrialPrepModalContent';
+import { initConnection, subscribeEyetrackerConnection } from '../api/socket-client';
+import { InputTypes } from '../api/inputType';
+import GTCursor from '../components/GTCursor';
 
 const separateBtnsNTarget = btns => {
   const t = btns.shift();
@@ -25,28 +28,34 @@ export default class StudyPage extends React.Component {
     this.state = {
       fullscreen: fw && fh,
       inputConnected: false,
+      eyetrackerConnected: false,
     };
     this.startTime = null;
+    this.socket = null;
     this.startTrial = this.startTrial.bind(this);
     this.cancelTrial = this.cancelTrial.bind(this);
     this.setFullscreenStatus = this.setFullscreenStatus.bind(this);
     this.checkInputConnection = this.checkInputConnection.bind(this);
-    // this.updateTargets = this.updateTargets.bind(this);
-    // this.targetSelected = this.targetSelected.bind(this);
     this.displayModal = this.displayModal.bind(this);
+    this.inputMounted = this.inputMounted.bind(this);
   }
 
   componentDidMount() {
     window.addEventListener('resize', this.setFullscreenStatus);
-    // different approaches for save info
-    // this.props.handleRedirect();
-    // const { redirectInfo } = this.props.location.state;
-    // const { inputType } = redirectInfo;
-    // this.setState({ inputType });
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.inputType !== prevProps.inputType && this.props.inputType === InputTypes.GESTURETAG) {
+      this.socket = initConnection();
+      subscribeEyetrackerConnection(this.socket, this.inputMounted);
+    }
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.setFullscreenStatus);
+    if (this.socket) {
+      this.socket.close();
+    }
   }
 
   startTrial(e) {
@@ -54,13 +63,6 @@ export default class StudyPage extends React.Component {
     const { conditionDone } = this.props;
     const prepCompleted = fullscreen && inputConnected;
     if (prepCompleted || conditionDone) {
-      // this.updateTargets((btns) => {
-      //   const { target, buttons } = separateBtnsNTarget(btns);
-      //   if (completedNum === totalTrialNum)
-      //     this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0 });
-      //   else
-      //     this.setState({ visible: false, buttons, targetButton: target, conditionDone: false });
-      // });
       this.props.startTrial();
     }
   }
@@ -69,55 +71,29 @@ export default class StudyPage extends React.Component {
     // this.setState({ visible: false });
   }
 
+  inputMounted(data) {
+    if (data !== 'ready') {
+      console.log('not ready');
+      return;
+    }
+    this.setState({ inputConnected: true });
+  }
+
   checkInputConnection() {
     const { inputType } = this.props;
-    if (inputType === 'pointing') {
+    if (inputType === InputTypes.POINTING) {
       return true;
-    } else {
-      // TODO: figure out how to check
+    } else if (inputType === InputTypes.GESTURETAG) {
+      return this.state.inputConnected;
     }
     return false;
   }
 
   setFullscreenStatus() {
     const fullscreen = (window.innerWidth === window.screen.width) && (window.innerHeight === window.screen.height);
-    // const fullscreen = true;
-    // const { inputConnected } = this.state;
     const isConnected = this.checkInputConnection();
     this.setState({ fullscreen, inputConnected: isConnected });
   }
-
-  // targetSelected(selectId) {
-  //   // post request to http server with data
-  //   const timeStamp = Date.now();
-  //   const targetId = this.state.targetButton.id;
-  //   const { startTime } = this;
-  //   fetch('/api/log', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json'
-  //     },
-  //     body: JSON.stringify({
-  //       timeStamp,
-  //       startTime,
-  //       targetId,
-  //       selectId
-  //     }),
-  //   })
-  //   .then(res => res.json())
-  //   .then(jsonRes => {
-  //     const { completedNum, totalTrialNum } = jsonRes;
-  //     if (jsonRes.change) {
-  //       this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
-  //     } else {
-  //       this.updateTargets(btns => {
-  //         const { target, buttons } = separateBtnsNTarget(btns);
-  //         this.setState({ buttons, targetButton: target, completedNum, totalTrialNum });
-  //       });
-  //     }
-  //   })
-  //   .catch(err => console.error(err));
-  // }
 
   displayModal() {
     const { fullscreen, inputConnected } = this.state;
@@ -169,7 +145,8 @@ export default class StudyPage extends React.Component {
             buttons,
             targetSelected,
             redirect,
-            updateStartTime
+            updateStartTime,
+            inputType
     } = this.props;
     return (redirect ? <Redirect push to="/" /> : (
       <div style={bgStyle}>
@@ -220,6 +197,7 @@ export default class StudyPage extends React.Component {
             />);
         }) : <p>Waiting...</p>)}
         {this.displayModal()}
+        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.socket} /> : null}
       </div>)
     );
   }

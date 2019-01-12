@@ -4,9 +4,12 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const parser = require('xml2json');
 const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
 const port = process.env.PORT || 5000;
 const utils = require('./utils/buttonGeneration');
 const uf = require('./utils/userInfo');
+const connection = require('./utils/connection');
 
 let userInfo = {
   data_dir_path: '',
@@ -235,6 +238,12 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(`${__dirname}/client/public/index.html`));
 });
 
-app.listen(port);
+http.listen(port);
+
+// socket io part
+io.on('connection', socketClient => {
+  console.log(`a client connected: ${socketClient.id}`);
+  connection.registerTwoChannels(socketClient, io);
+});
 
 console.log(`App is listening on port: ${port}`);
