@@ -21,7 +21,14 @@ namespace Interaction_Streams_101
             // NOTE: Make sure that Tobii.EyeX.exe is running
             var host = new Host();
             Console.WriteLine("Save into {0}", log_file_name);
-            socket = IO.Socket("http://localhost:3000/");
+            socket = IO.Socket("http://localhost:5000/");
+            socket.On("newconnection", (data) =>
+            {
+                if (data.Equals("received"))
+                {
+                    socket.Emit("eyetracker", "ready");
+                }
+            });
             // 2. Create stream. 
 
             var fixationDataStream = host.Streams.CreateFixationDataStream(Tobii.Interaction.Framework.FixationDataMode.Sensitive);
@@ -85,7 +92,7 @@ namespace Interaction_Streams_101
                 return;
             //XData = oneEuroFilterX.Filter(x, 30);
             //YData = oneEuroFilterY.Filter(y, 30);
-            socket.Emit("eyemove", XData, YData);
+            socket.Emit("eyemoved", Convert.ToInt32(XData), Convert.ToInt32(YData));
         }
 
         public static void Write(double x, double y, double ts)
