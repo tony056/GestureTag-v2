@@ -6,9 +6,11 @@ import { Animate } from 'react-move';
 import GTButton from '../components/GTButton';
 import GTTrialModal from '../components/GTTrialModal';
 import GTTrialPrepModalContent from '../components/GTTrialPrepModalContent';
-import { initConnection, subscribeEyetrackerConnection } from '../api/socket-client';
+import { initConnection, subscribeEyetrackerConnection, subsribeEyemovedEvent } from '../api/socket-client';
 import { InputTypes } from '../api/inputType';
 import GTCursor from '../components/GTCursor';
+import { arrowByOrder } from '../api/arrowDirection';
+import { enableGestureListener, disableGestureListener, gestureDetector } from '../api/gesture';
 
 const separateBtnsNTarget = btns => {
   const t = btns.shift();
@@ -29,6 +31,7 @@ export default class StudyPage extends React.Component {
       fullscreen: fw && fh,
       inputConnected: false,
       eyetrackerConnected: false,
+      overlaps: []
     };
     this.startTime = null;
     this.socket = null;
@@ -38,10 +41,13 @@ export default class StudyPage extends React.Component {
     this.checkInputConnection = this.checkInputConnection.bind(this);
     this.displayModal = this.displayModal.bind(this);
     this.inputMounted = this.inputMounted.bind(this);
+    this.checkOverlapping = this.checkOverlapping.bind(this);
+    this.gestureClick = this.gestureClick.bind(this);
   }
 
   componentDidMount() {
     window.addEventListener('resize', this.setFullscreenStatus);
+    enableGestureListener(this.gestureClick);
   }
 
   componentDidUpdate(prevProps) {
@@ -53,9 +59,23 @@ export default class StudyPage extends React.Component {
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.setFullscreenStatus);
+    disableGestureListener(this.gestureClick);
     if (this.socket) {
       this.socket.close();
     }
+  }
+
+  gestureClick(e) {
+    const index = gestureDetector(e);
+    console.log(`gesture clicked: ${index}`);
+    if (index < 0) return;
+    const { overlaps } = this.state;
+    if (!overlaps || overlaps.length <= index) {
+      return;
+    } 
+    const id = overlaps[index];
+    console.log(`click id: ${id}`);
+    document.getElementById(id).click();
   }
 
   startTrial(e) {
@@ -137,6 +157,41 @@ export default class StudyPage extends React.Component {
     );
   }
 
+  checkOverlapping({ x, y, width, height, l1, r1 }) {
+    
+    const { buttons, targetButton } = this.props;
+    const all = [...buttons].concat([targetButton]);
+    all.sort((a, b) => a.x - b.x);
+    const intersections = all.filter((btn, i) => {
+      const l2 = { x: btn.x, y: btn.y };
+      const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };
+      if (l1.x > r2.x || l2.x > r1.x) {
+        return false;
+      }
+      if (l1.y > r2.y || l2.y > r1.y) {
+        return false;
+      }
+      if (btn.w === btn.h) {
+        // circle
+        const d = Math.hypot(x - (btn.x + btn.w / 2), y - (btn.y + btn.h / 2));
+        const touchD = (width + btn.w) / 2;
+        return d < touchD;
+      }
+      return true;
+    });
+    if (!intersections || intersections.length === 0) {
+      this.setState({ overlaps: [] }); 
+      return;
+    }
+    intersections.sort((a, b) => {
+      const da = Math.hypot(x - (a.x + a.w / 2), y - (a.y + a.h / 2));
+      const db = Math.hypot(x - (b.x + b.w / 2), y - (b.y + b.h / 2));
+      return da - db;
+    });
+    const final = intersections.length > 4 ? intersections.slice(0, 4) : intersections;
+    this.setState({ overlaps: final.map(btn => btn.id) }); 
+  }
+
   render() {
     const { bgStyle,
             targetStyleId,
@@ -148,6 +203,7 @@ export default class StudyPage extends React.Component {
             updateStartTime,
             inputType
     } = this.props;
+    const { overlaps } = this.state;
     return (redirect ? <Redirect push to="/" /> : (
       <div style={bgStyle}>
         <Animate
@@ -176,6 +232,7 @@ export default class StudyPage extends React.Component {
                 height={`${height}px`}
                 name={targetButton.id}
                 click={targetSelected}
+                arrowChild={overlaps && overlaps.indexOf(targetButton.id) >= 0 ? arrowByOrder(overlaps.indexOf(targetButton.id)) : ''}
               />
           );
         }}
@@ -194,10 +251,11 @@ export default class StudyPage extends React.Component {
               height={`${h}px`}
               name={id}
               click={targetSelected}
+              arrowChild={overlaps && overlaps.indexOf(id) >= 0 ? arrowByOrder(overlaps.indexOf(id)) : ''}
             />);
         }) : <p>Waiting...</p>)}
         {this.displayModal()}
-        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.socket} /> : null}
+        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.socket} checkOverlaps={this.checkOverlapping} /> : null}
       </div>)
     );
   }
