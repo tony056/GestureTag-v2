@@ -243,7 +243,8 @@ http.listen(port);
 // socket io part
 io.on('connection', socketClient => {
   console.log(`a client connected: ${socketClient.id}`);
-  connection.registerTwoChannels(socketClient, io);
+  // register browser, touchpad, and eyetracker
+  connection.registerAllChannels(socketClient, io);
 });
 
 console.log(`App is listening on port: ${port}`);
