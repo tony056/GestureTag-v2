@@ -13,6 +13,8 @@ namespace Interaction_Streams_101
         static List<string> buffer = new List<string>();
         static string log_file_name = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\New_eye_tracking_log.txt";
         static Socket socket;
+        static double xPos = 0.0;
+        static double yPos = 0.0;
         
         public static void Main(string[] args)
         {
@@ -86,13 +88,14 @@ namespace Interaction_Streams_101
 
         private static void SendFilteredValue(double x, double y)
         {
-            var XData = x;
-            var YData = y;
-            if (XData == double.NaN || YData == double.NaN)
-                return;
+            if (x != double.NaN && y != double.NaN)
+            {
+                xPos = x;
+                yPos = y;
+            }
             //XData = oneEuroFilterX.Filter(x, 30);
             //YData = oneEuroFilterY.Filter(y, 30);
-            socket.Emit("eyemoved", Convert.ToInt32(XData), Convert.ToInt32(YData));
+            socket.Emit("eyemoved", Convert.ToInt32(xPos), Convert.ToInt32(yPos));
         }
 
         public static void Write(double x, double y, double ts)
