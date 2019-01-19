@@ -6,7 +6,7 @@ import { Animate } from 'react-move';
 import GTButton from '../components/GTButton';
 import GTTrialModal from '../components/GTTrialModal';
 import GTTrialPrepModalContent from '../components/GTTrialPrepModalContent';
-import { initConnection, subscribeEyetrackerConnection, subsribeEyemovedEvent } from '../api/socket-client';
+import { initConnection, subscribeEyetrackerConnection, subsribeEyemovedEvent, subscribeTouchpadConnection, subscribeTouchGestureEvent } from '../api/socket-client';
 import { InputTypes } from '../api/inputType';
 import GTCursor from '../components/GTCursor';
 import { arrowByOrder } from '../api/arrowDirection';
@@ -31,6 +31,7 @@ export default class StudyPage extends React.Component {
       fullscreen: fw && fh,
       inputConnected: false,
       eyetrackerConnected: false,
+      touchpadConnected: false,
       overlaps: []
     };
     this.startTime = null;
@@ -47,26 +48,27 @@ export default class StudyPage extends React.Component {
 
   componentDidMount() {
     window.addEventListener('resize', this.setFullscreenStatus);
-    enableGestureListener(this.gestureClick);
+    // enableGestureListener(this.gestureClick);
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.inputType !== prevProps.inputType && this.props.inputType === InputTypes.GESTURETAG) {
-      this.socket = initConnection();
+      this.socket = initConnection('http://localhost:5000', 'browser');
       subscribeEyetrackerConnection(this.socket, this.inputMounted);
+      subscribeTouchpadConnection(this.socket, this.inputMounted);
     }
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.setFullscreenStatus);
-    disableGestureListener(this.gestureClick);
+    // disableGestureListener(this.gestureClick);
     if (this.socket) {
       this.socket.close();
     }
   }
 
-  gestureClick(e) {
-    const index = gestureDetector(e);
+  gestureClick(index) {
+    // const index = gestureDetector(e);
     console.log(`gesture clicked: ${index}`);
     if (index < 0) return;
     const { overlaps } = this.state;
@@ -92,11 +94,22 @@ export default class StudyPage extends React.Component {
   }
 
   inputMounted(data) {
-    if (data !== 'ready') {
-      console.log('not ready');
-      return;
+    const { eyetrackerConnected, touchpadConnected } = this.state;
+    let newEyetracker = eyetrackerConnected;
+    let newTouchpad = touchpadConnected;
+    if (data === 'eyetracker') {
+      newEyetracker = true;
+    } else if (data === 'touchpad') {
+      newTouchpad = true;
+      subscribeTouchGestureEvent(this.socket, dir => {
+        this.gestureClick(dir);
+      });
     }
-    this.setState({ inputConnected: true });
+    this.setState({ 
+      eyetrackerConnected: newEyetracker, 
+      touchpadConnected: newTouchpad, 
+      inputConnected: newEyetracker && newTouchpad 
+    });
   }
 
   checkInputConnection() {

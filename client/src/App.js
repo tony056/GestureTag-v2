@@ -8,6 +8,7 @@ import AppSelection from './pages/AppSelection';
 import AbstractConfig from './pages/AbstractConfig';
 import RealApp from './pages/RealApp';
 import AbstractStudy from './pages/AbstractStudy';
+import Touchpad from './pages/Touchpad';
 
 class App extends Component {
   render() {
@@ -18,6 +19,7 @@ class App extends Component {
         <Route path='/abstract-selection' component={AbstractConfig} />
         <Route path='/realistic' component={RealApp} />
         <Route path='/study/single' component={AbstractStudy} />
+        <Route path='/touchpad' component={Touchpad} />
       </Switch>
     );
   }
