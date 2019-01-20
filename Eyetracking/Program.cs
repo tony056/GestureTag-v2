@@ -15,6 +15,8 @@ namespace Interaction_Streams_101
         static Socket socket;
         static double xPos = 0.0;
         static double yPos = 0.0;
+        static double prevTime = -1.0;
+        static double threshold = 50;
         
         public static void Main(string[] args)
         {
@@ -35,7 +37,7 @@ namespace Interaction_Streams_101
 
             var fixationDataStream = host.Streams.CreateFixationDataStream(Tobii.Interaction.Framework.FixationDataMode.Sensitive);
             fixationDataStream.Begin((x, y, ts) => changePos(x, y, ts));
-            fixationDataStream.Data((x, y, ts) => SendFilteredValue(x, y));
+            fixationDataStream.Data((x, y, ts) => SendFilteredValue(x, y, ts));
             fixationDataStream.End((x, y, ts) => changePos(x, y, ts));
 
             while (true)
@@ -83,19 +85,25 @@ namespace Interaction_Streams_101
             var YData = y;
             //Console.WriteLine("RAW Timestamp: {0}\t X: {1} Y:{2}", timestamp, XData, YData);
             //SendFilteredValue(x, y);
-            Console.WriteLine("Timestamp: {0}\t X: {1} Y:{2}", timestamp, XData, YData);
+            // Console.WriteLine("Timestamp: {0}\t X: {1} Y:{2}", timestamp, XData, YData);
         }
 
-        private static void SendFilteredValue(double x, double y)
+        private static void SendFilteredValue(double x, double y, double timestamp)
         {
+            double delta = timestamp - prevTime;
+            if (delta < threshold) return;
             if (x != double.NaN && y != double.NaN)
             {
                 xPos = x;
                 yPos = y;
             }
-            //XData = oneEuroFilterX.Filter(x, 30);
-            //YData = oneEuroFilterY.Filter(y, 30);
+            
             socket.Emit("eyemoved", Convert.ToInt32(xPos), Convert.ToInt32(yPos));
+            if (!Program.isRecording)
+                return;
+            prevTime = timestamp;
+            Console.WriteLine("Log Timestamp: {0}\t X: {1} Y:{2}", delta, xPos, yPos);
+            
         }
 
         public static void Write(double x, double y, double ts)
