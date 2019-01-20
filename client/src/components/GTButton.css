@@ -1,0 +1,34 @@
+.base-button {
+  position: absolute;
+  z-index: 100;
+  float: left;
+  border-style: none;
+}
+
+.round-button {
+  border-radius: 50%;
+  border-style: none;
+}
+
+.dev {
+  border: 2px solid #4CAF50;
+  background: rgba(255, 255, 255, 0.0);
+}
+
+.distractor {
+  background: rgba(128, 128, 128, 1.0);
+}
+
+.abstract-target {
+  background: rgba(43, 91, 159, 1.0);
+}
+
+.invisible {
+  border-style: none;
+  background: rgba(128, 128, 128, 0.0);
+}
+
+
+button:active {
+  background: rgba(252, 15, 192, 1.0);
+}

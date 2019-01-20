@@ -174,7 +174,7 @@ export default class StudyPage extends React.Component {
     
     const { buttons, targetButton } = this.props;
     const all = [...buttons].concat([targetButton]);
-    all.sort((a, b) => a.x - b.x);
+    // all.sort((a, b) => a.x - b.x);
     const intersections = all.filter((btn, i) => {
       const l2 = { x: btn.x, y: btn.y };
       const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };

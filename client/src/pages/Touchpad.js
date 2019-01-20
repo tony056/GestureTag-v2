@@ -42,7 +42,7 @@ export default class Touchpad extends React.Component {
   }
 
   enableTouchpad() {
-    this.socket = initConnection('http://10.18.219.225:5000', 'touchpad');
+    this.socket = initConnection('http://10.19.200.29:5000', 'touchpad');
     const customizedPan = new Hammer.Pan({ 
       direction: Hammer.DIRECTION_ALL, 
       threshold: 10, 
