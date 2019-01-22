@@ -6,21 +6,9 @@ import { Animate } from 'react-move';
 import GTButton from '../components/GTButton';
 import GTTrialModal from '../components/GTTrialModal';
 import GTTrialPrepModalContent from '../components/GTTrialPrepModalContent';
-import { initConnection, subscribeEyetrackerConnection, subsribeEyemovedEvent, subscribeTouchpadConnection, subscribeTouchGestureEvent } from '../api/socket-client';
+import { initConnection, subscribeEyetrackerConnection, subscribeTouchpadConnection, subscribeTouchGestureEvent } from '../api/socket-client';
 import { InputTypes } from '../api/inputType';
 import GTCursor from '../components/GTCursor';
-import { arrowByOrder } from '../api/arrowDirection';
-import { enableGestureListener, disableGestureListener, gestureDetector } from '../api/gesture';
-
-const separateBtnsNTarget = btns => {
-  const t = btns.shift();
-  const target = {...t};
-  target.key = 'target';
-  return {
-    target,
-    buttons: btns
-  };
-};
 
 export default class StudyPage extends React.Component {
   constructor(props) {
@@ -36,14 +24,13 @@ export default class StudyPage extends React.Component {
     };
     this.startTime = null;
     this.socket = null;
-    this.testSocket = React.createRef();
+    this.cursor = React.createRef();
     this.startTrial = this.startTrial.bind(this);
     this.cancelTrial = this.cancelTrial.bind(this);
     this.setFullscreenStatus = this.setFullscreenStatus.bind(this);
     this.checkInputConnection = this.checkInputConnection.bind(this);
     this.displayModal = this.displayModal.bind(this);
     this.inputMounted = this.inputMounted.bind(this);
-    this.checkOverlapping = this.checkOverlapping.bind(this);
     this.gestureClick = this.gestureClick.bind(this);
     this.getDisplayButtons = this.getDisplayButtons.bind(this);
   }
@@ -57,7 +44,7 @@ export default class StudyPage extends React.Component {
   componentDidUpdate(prevProps) {
     if (this.props.inputType !== prevProps.inputType && this.props.inputType === InputTypes.GESTURETAG) {
       this.socket = initConnection('http://localhost:5000', 'browser');
-      // subscribeEyetrackerConnection(this.socket, this.inputMounted);
+      subscribeEyetrackerConnection(this.socket, this.inputMounted);
       subscribeTouchpadConnection(this.socket, this.inputMounted);
     }
   }
@@ -71,16 +58,7 @@ export default class StudyPage extends React.Component {
   }
 
   gestureClick(index) {
-    // const index = gestureDetector(e);
-    console.log(`gesture clicked: ${index}`);
-    if (index < 0) return;
-    const { overlaps } = this.state;
-    if (!overlaps || overlaps.length <= index) {
-      return;
-    }
-    const id = overlaps[index];
-    console.log(`click id: ${id}`);
-    document.getElementById(id).click();
+    this.cursor.current.click(index);
   }
 
   startTrial(e) {
@@ -109,9 +87,9 @@ export default class StudyPage extends React.Component {
       });
     }
     this.setState({
-      eyetrackerConnected: true,
+      eyetrackerConnected: newEyetracker,
       touchpadConnected: newTouchpad,
-      inputConnected: true && newTouchpad
+      inputConnected: newEyetracker && newTouchpad
     });
   }
 
@@ -173,57 +151,6 @@ export default class StudyPage extends React.Component {
     );
   }
 
-  checkOverlapping({ x, y, minR, maxR, minC, maxC }) {
-
-    const { buttons, targetButton } = this.props;
-    const intersections = [];
-    if (buttons.length !== 0) {
-      for (let r = minR; r < maxR + 1; r++) {
-        for (let c = minC; c < maxC + 1; c++) {
-          if (r >= 15 || r < 0 || c < 0 || c >= 24) {
-            continue;
-          }
-          const grid = buttons[r][c];
-          if (grid.w > 0 && grid.h > 0) {
-            intersections.push(grid);
-          }
-        }
-      }
-    }
-    if ((targetButton.row >= minR && targetButton.row <= maxR) && (targetButton.col >= minC && targetButton.col <= maxC)) {
-      intersections.push(targetButton);
-    }
-    // const intersections = all.filter((btn, i) => {
-    //   const l2 = { x: btn.x, y: btn.y };
-    //   const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };
-    //   if (l1.x > r2.x || l2.x > r1.x) {
-    //     return false;
-    //   }
-    //   if (l1.y > r2.y || l2.y > r1.y) {
-    //     return false;
-    //   }
-    //   if (btn.w === btn.h) {
-    //     // circle
-    //     const d = Math.hypot(x - (btn.x + btn.w / 2), y - (btn.y + btn.h / 2));
-    //     const touchD = (width + btn.w) / 2;
-    //     return d < touchD;
-    //   }
-    //   return true;
-    // });
-    console.log(`intersections: ${intersections.length}`);
-    if (!intersections || intersections.length === 0) {
-      this.setState({ overlaps: [] });
-      return;
-    }
-    intersections.sort((a, b) => {
-      const da = Math.hypot(x - (a.x + a.w / 2), y - (a.y + a.h / 2));
-      const db = Math.hypot(x - (b.x + b.w / 2), y - (b.y + b.h / 2));
-      return da - db;
-    });
-    const final = intersections.length > 4 ? intersections.slice(0, 4) : intersections;
-    this.setState({ overlaps: final.map(btn => btn.id) });
-  }
-
   getDisplayButtons() {
     const { buttons } = this.props;
     let displayButtons = [];
@@ -245,9 +172,8 @@ export default class StudyPage extends React.Component {
             inputType
     } = this.props;
     const displayButtons = this.getDisplayButtons();
-    const { overlaps } = this.state;
     return (redirect ? <Redirect push to="/" /> : (
-      <div ref={this.testSocket} id="bg" style={bgStyle}>
+      <div id="bg" style={bgStyle}>
         <Animate
           key={'target'}
           start={{ x: targetButton.x, y: targetButton.y, width: targetButton.w, height: targetButton.h }}
@@ -274,7 +200,6 @@ export default class StudyPage extends React.Component {
                 height={`${height}px`}
                 name={targetButton.id}
                 click={targetSelected}
-                arrowChild={''}
               />
           );
         }}
@@ -294,11 +219,10 @@ export default class StudyPage extends React.Component {
               height={`${h}px`}
               name={id}
               click={targetSelected}
-              arrowChild={''}
             />);
         }) : <p>Waiting...</p>)}
         {this.displayModal()}
-        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.testSocket} buttons={buttons} targetButton={targetButton} /> : null}
+        {inputType === InputTypes.GESTURETAG ? <GTCursor ref={this.cursor} socket={this.socket} buttons={buttons} targetButton={targetButton} isFetching={this.props.isFetching} /> : null}
       </div>)
     );
   }
