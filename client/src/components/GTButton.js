@@ -2,12 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import './GTButton.css';
 
-export default function GTButton({ width, height, left, top, name, click, value, styleId, arrowChild }) {
-  const imageStyle = {
-    width: '100%',
-    height: '100%'
-  };
-
+export default function GTButton({ width, height, left, top, name, click, value, styleId }) {
   const handleClick = () => {
     click(value);
   }
@@ -32,8 +27,6 @@ export default function GTButton({ width, height, left, top, name, click, value,
   };
 
   return (
-    <button id={value} name={name} className={renderStyle(styleId)} style={posStyle} onClick={handleClick}>
-      {(arrowChild ? <img style={imageStyle} src={arrowChild} /> : null)}
-    </button>
+    <button id={value} name={name} className={renderStyle(styleId)} style={posStyle} onClick={handleClick} />
   );
 }

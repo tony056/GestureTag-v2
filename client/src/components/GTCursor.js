@@ -1,6 +1,6 @@
 import React from 'react';
 import { subsribeEyemovedEvent } from '../api/socket-client';
-import { arrowDirection } from '../api/arrowDirection';
+import { arrowDirection, arrowByOrder } from '../api/arrowDirection';
 
 const cursorSize = 100;
 const arrowSize = 32;
@@ -37,29 +37,39 @@ export default class GTCursor extends React.Component {
     };
     this.updatePosition = this.updatePosition.bind(this);
     this.checkOverlapping = this.checkOverlapping.bind(this);
+    this.click = this.click.bind(this);
   }
 
   componentDidMount() {
-    console.log('did update');
-    document.getElementById('bg').addEventListener('mousemove', e => {
+    // console.log('did update');
+    // document.getElementById('bg').addEventListener('mousemove', e => {
 
 
-      const { pageX, pageY } = e;
-      console.log(`move:${pageX}, ${pageY}`);
-      this.updatePosition({ screenX: pageX, screenY: pageY });
-    });
+    //   const { pageX, pageY } = e;
+    //   console.log(`move:${pageX}, ${pageY}`);
+    //   this.updatePosition({ screenX: pageX, screenY: pageY });
+    // });
   }
 
   componentDidUpdate(prevProps) {
     if (!prevProps.socket && this.props.socket) {
-      // subsribeEyemovedEvent(this.props.socket, (x, y) => {
-      //   this.updatePosition({ screenX: x, screenY: y });
-      // });
-
+      subsribeEyemovedEvent(this.props.socket, (x, y) => {
+        this.updatePosition({ screenX: x, screenY: y });
+      });
     }
   }
 
+  click(index) {
+    const { overlaps } = this.state;
+    if (index < 0 || !overlaps || index >= overlaps.length) {
+      return;
+    }
+    const { id } = overlaps[index];
+    document.getElementById(id).click();
+  }
+
   updatePosition({ screenX, screenY }) {
+    if (this.props.isFetching) return;
     const minX = screenX - cursorSize / 2;
     const minY = screenY - cursorSize / 2;
     const maxX = screenX + cursorSize / 2;
@@ -73,19 +83,26 @@ export default class GTCursor extends React.Component {
       row: Math.floor(maxY / 80),
       col: Math.floor(maxX / 80)
     };
-
     const cursor = {
       x: screenX,
       y: screenY,
       minR: lefTop.row,
       maxR: rightBottom.row,
       minC: lefTop.col,
-      maxC: rightBottom.col
+      maxC: rightBottom.col,
+      l1: {
+        x: minX,
+        y: minY
+      },
+      r1: {
+        x: maxX,
+        y: maxY
+      }
     };
     this.setState({ x: screenX, y: screenY, overlaps: this.checkOverlapping(cursor) });
   }
 
-  checkOverlapping({ x, y, minR, maxR, minC, maxC }) {
+  checkOverlapping({ x, y, minR, maxR, minC, maxC, l1, r1 }) {
     const { buttons, targetButton } = this.props;
     const intersections = [];
     if (buttons.length !== 0) {
@@ -104,36 +121,37 @@ export default class GTCursor extends React.Component {
     if ((targetButton.row >= minR && targetButton.row <= maxR) && (targetButton.col >= minC && targetButton.col <= maxC)) {
       intersections.push(targetButton);
     }
-    // const intersections = all.filter((btn, i) => {
-    //   const l2 = { x: btn.x, y: btn.y };
-    //   const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };
-    //   if (l1.x > r2.x || l2.x > r1.x) {
-    //     return false;
-    //   }
-    //   if (l1.y > r2.y || l2.y > r1.y) {
-    //     return false;
-    //   }
-    //   if (btn.w === btn.h) {
-    //     // circle
-    //     const d = Math.hypot(x - (btn.x + btn.w / 2), y - (btn.y + btn.h / 2));
-    //     const touchD = (width + btn.w) / 2;
-    //     return d < touchD;
-    //   }
-    //   return true;
-    // });
-    console.log(`intersections: ${intersections.length}`);
-    if (!intersections || intersections.length === 0) {
+    const filtered = intersections.filter((btn, i) => {
+      const l2 = { x: btn.x, y: btn.y };
+      const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };
+      if (l1.x > r2.x || l2.x > r1.x) {
+        return false;
+      }
+      if (l1.y > r2.y || l2.y > r1.y) {
+        return false;
+      }
+      if (btn.w === btn.h) {
+        // circle
+        const d = Math.hypot(x - (btn.x + btn.w / 2), y - (btn.y + btn.h / 2));
+        const touchD = (cursorSize + btn.w) / 2;
+        return d < touchD;
+      }
+      return true;
+    });
+    
+    if (!filtered || filtered.length === 0) {
       this.setState({ overlaps: [] });
       return;
     }
-    intersections.sort((a, b) => {
+    filtered.sort((a, b) => {
       const da = Math.hypot(x - (a.x + a.w / 2), y - (a.y + a.h / 2));
       const db = Math.hypot(x - (b.x + b.w / 2), y - (b.y + b.h / 2));
       return da - db;
     });
-    const final = intersections.length > 4 ? intersections.slice(0, 4) : intersections;
+    const final = filtered.length > 4 ? filtered.slice(0, 4) : filtered;
     // this.setState({ overlaps:  });
-    return final.map(btn => btn.id);
+    // return final.map(btn => btn.id);
+    return final;
   }
 
   render() {
@@ -145,12 +163,13 @@ export default class GTCursor extends React.Component {
       <div>
         <div style={cursorStyle} />
         {(overlaps && overlaps.length > 0 ?
-          overlaps.map(pos => {
-            const coord = pos.split('_');
+          overlaps.map((btn, i) => {
             const style = {...arrowStyle};
-            style.left = `${coord[0]}px`;
-            style.top = `${coord[1]}px`;
-            return <img style={style} src={arrowDirection.UP} />;
+            style.left = `${btn.x}px`;
+            style.top = `${btn.y}px`;
+            style.width = `${btn.w}px`;
+            style.height = `${btn.h}px`;
+            return <img key={i} style={style} src={arrowByOrder(i)} />;
           }) : null)}
       </div>
   );
