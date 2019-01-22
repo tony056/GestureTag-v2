@@ -1,16 +1,6 @@
 import React from 'react';
 import StudyPage from './StudyPage';
 
-const separateBtnsNTarget = btns => {
-  const t = btns.shift();
-  const target = {...t};
-  target.key = 'target';
-  return {
-    target,
-    buttons: btns
-  };
-};
-
 export default class AbstractStudy extends React.Component {
   constructor(props) {
     super(props);
@@ -50,8 +40,8 @@ export default class AbstractStudy extends React.Component {
 
   startTrial(e) {
     const { completedNum, totalTrialNum } = this.state;
-    this.updateTargets((btns) => {
-      const { target, buttons } = separateBtnsNTarget(btns);
+    this.updateTargets((btnObj) => {
+      const { target, buttons } = btnObj;
       if (completedNum === totalTrialNum)
         this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0 });
       else
@@ -87,7 +77,7 @@ export default class AbstractStudy extends React.Component {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
       } else {
         this.updateTargets(btns => {
-          const { target, buttons } = separateBtnsNTarget(btns);
+          const { target, buttons } = btns;
           this.setState({ buttons, targetButton: target, completedNum, totalTrialNum });
         });
       }

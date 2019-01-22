@@ -36,6 +36,7 @@ export default class StudyPage extends React.Component {
     };
     this.startTime = null;
     this.socket = null;
+    this.testSocket = React.createRef();
     this.startTrial = this.startTrial.bind(this);
     this.cancelTrial = this.cancelTrial.bind(this);
     this.setFullscreenStatus = this.setFullscreenStatus.bind(this);
@@ -44,17 +45,19 @@ export default class StudyPage extends React.Component {
     this.inputMounted = this.inputMounted.bind(this);
     this.checkOverlapping = this.checkOverlapping.bind(this);
     this.gestureClick = this.gestureClick.bind(this);
+    this.getDisplayButtons = this.getDisplayButtons.bind(this);
   }
 
   componentDidMount() {
     window.addEventListener('resize', this.setFullscreenStatus);
     // enableGestureListener(this.gestureClick);
+    // this.testSocket = document.getElementById('bg');
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.inputType !== prevProps.inputType && this.props.inputType === InputTypes.GESTURETAG) {
       this.socket = initConnection('http://localhost:5000', 'browser');
-      subscribeEyetrackerConnection(this.socket, this.inputMounted);
+      // subscribeEyetrackerConnection(this.socket, this.inputMounted);
       subscribeTouchpadConnection(this.socket, this.inputMounted);
     }
   }
@@ -106,9 +109,9 @@ export default class StudyPage extends React.Component {
       });
     }
     this.setState({ 
-      eyetrackerConnected: newEyetracker, 
+      eyetrackerConnected: true, 
       touchpadConnected: newTouchpad, 
-      inputConnected: newEyetracker && newTouchpad 
+      inputConnected: true && newTouchpad 
     });
   }
 
@@ -170,28 +173,44 @@ export default class StudyPage extends React.Component {
     );
   }
 
-  checkOverlapping({ x, y, width, height, l1, r1 }) {
+  checkOverlapping({ x, y, minR, maxR, minC, maxC }) {
     
     const { buttons, targetButton } = this.props;
-    const all = [...buttons].concat([targetButton]);
-    // all.sort((a, b) => a.x - b.x);
-    const intersections = all.filter((btn, i) => {
-      const l2 = { x: btn.x, y: btn.y };
-      const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };
-      if (l1.x > r2.x || l2.x > r1.x) {
-        return false;
+    const intersections = [];
+    if (buttons.length !== 0) {
+      for (let r = minR; r < maxR + 1; r++) {
+        for (let c = minC; c < maxC + 1; c++) {
+          if (r >= 15 || r < 0 || c < 0 || c >= 24) {
+            continue;
+          }
+          const grid = buttons[r][c];
+          if (grid.w > 0 && grid.h > 0) {
+            intersections.push(grid);
+          } 
+        }
       }
-      if (l1.y > r2.y || l2.y > r1.y) {
-        return false;
-      }
-      if (btn.w === btn.h) {
-        // circle
-        const d = Math.hypot(x - (btn.x + btn.w / 2), y - (btn.y + btn.h / 2));
-        const touchD = (width + btn.w) / 2;
-        return d < touchD;
-      }
-      return true;
-    });
+    }
+    if ((targetButton.row >= minR && targetButton.row <= maxR) && (targetButton.col >= minC && targetButton.col <= maxC)) {
+      intersections.push(targetButton);
+    }
+    // const intersections = all.filter((btn, i) => {
+    //   const l2 = { x: btn.x, y: btn.y };
+    //   const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };
+    //   if (l1.x > r2.x || l2.x > r1.x) {
+    //     return false;
+    //   }
+    //   if (l1.y > r2.y || l2.y > r1.y) {
+    //     return false;
+    //   }
+    //   if (btn.w === btn.h) {
+    //     // circle
+    //     const d = Math.hypot(x - (btn.x + btn.w / 2), y - (btn.y + btn.h / 2));
+    //     const touchD = (width + btn.w) / 2;
+    //     return d < touchD;
+    //   }
+    //   return true;
+    // });
+    console.log(`intersections: ${intersections.length}`);
     if (!intersections || intersections.length === 0) {
       this.setState({ overlaps: [] }); 
       return;
@@ -205,20 +224,29 @@ export default class StudyPage extends React.Component {
     this.setState({ overlaps: final.map(btn => btn.id) }); 
   }
 
+  getDisplayButtons() {
+    const { buttons } = this.props;
+    let displayButtons = [];
+    for (let i = 0; i < buttons.length; i++) {
+      displayButtons = displayButtons.concat(buttons[i]);
+    }
+    return displayButtons;
+  }
+
   render() {
     const { bgStyle,
             targetStyleId,
             buttonStyleId,
             targetButton,
-            buttons,
             targetSelected,
             redirect,
             updateStartTime,
             inputType
     } = this.props;
+    const displayButtons = this.getDisplayButtons();
     const { overlaps } = this.state;
     return (redirect ? <Redirect push to="/" /> : (
-      <div style={bgStyle}>
+      <div ref={this.testSocket} style={bgStyle}>
         <Animate
           key={'target'}
           start={{ x: targetButton.x, y: targetButton.y, width: targetButton.w, height: targetButton.h }}
@@ -250,9 +278,10 @@ export default class StudyPage extends React.Component {
           );
         }}
       </Animate>
-      {(buttons && buttons.length > 0 ?
-        buttons.map((btn, i) => {
+      {(displayButtons && displayButtons.length > 0 ?
+        displayButtons.map((btn, i) => {
           const { x, y, w, h, id } = btn;
+          if (w < 0 || h < 0) return null;
           return (
             <GTButton
               key={id}
@@ -268,7 +297,7 @@ export default class StudyPage extends React.Component {
             />);
         }) : <p>Waiting...</p>)}
         {this.displayModal()}
-        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.socket} checkOverlaps={this.checkOverlapping} /> : null}
+        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.testSocket} checkOverlaps={this.checkOverlapping} /> : null}
       </div>)
     );
   }

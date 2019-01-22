@@ -27,27 +27,42 @@ export default class GTCursor extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (!prevProps.socket && this.props.socket) {
-      subsribeEyemovedEvent(this.props.socket, (x, y) => {
-        this.updatePosition({ screenX: x, screenY: y });
+      // subsribeEyemovedEvent(this.props.socket, (x, y) => {
+      //   this.updatePosition({ screenX: x, screenY: y });
+      // });
+      this.props.socket.addEventListener('mousemove', e => {
+        console.log('move');
+        
+        const { screenX, screenY } = e;
+        this.updatePosition({ screenX, screenY });
       });
     }
   }
 
   updatePosition({ screenX, screenY }) {
+    const minX = screenX - cursorSize / 2;
+    const minY = screenY - cursorSize / 2;
+    const maxX = screenX + cursorSize / 2;
+    const maxY = screenY + cursorSize / 2;
+    const lefTop =  {
+      row: Math.floor(minY / 80),
+      col: Math.floor(minX / 80),
+    };
+
+    const rightBottom = {
+      row: Math.floor(maxY / 80),
+      col: Math.floor(maxX / 80)
+    };
+    
     const cursor = {
       x: screenX,
       y: screenY,
-      width: cursorSize,
-      height: cursorSize,
-      l1: {
-        x: screenX - cursorSize / 2,
-        y: screenY - cursorSize / 2
-      },
-      r1: {
-        x: screenX + cursorSize / 2,
-        y: screenY + cursorSize / 2
-      }
+      minR: lefTop.row,
+      maxR: rightBottom.row,
+      minC: lefTop.col,
+      maxC: rightBottom.col
     };
+
     this.props.checkOverlaps(cursor);
     this.setState({ x: screenX, y: screenY });
   }
