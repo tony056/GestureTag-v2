@@ -42,17 +42,17 @@ export default class Touchpad extends React.Component {
   }
 
   enableTouchpad() {
-    this.socket = initConnection('http://10.18.219.225:5000', 'touchpad');
-    const customizedPan = new Hammer.Pan({ 
-      direction: Hammer.DIRECTION_ALL, 
-      threshold: 10, 
-      pointers: 0, 
-      event: 'pan' 
+    this.socket = initConnection(`${window.location.hostname}:5000`, 'touchpad');
+    const customizedPan = new Hammer.Pan({
+      direction: Hammer.DIRECTION_ALL,
+      threshold: 10,
+      pointers: 0,
+      event: 'pan'
     });
     if (this.touchManager) {
       this.touchManager.add(customizedPan);
       this.touchManager.on('panend', (e) => {
-        const dir = touchGestureDetector(e);        
+        const dir = touchGestureDetector(e);
         // emit direction through socket
         this.socket.emit('gesture', dir);
         this.setState({ gesture: dir });
@@ -67,7 +67,7 @@ export default class Touchpad extends React.Component {
       this.setState({ fullscreen: next });
     }
   }
-  
+
   render () {
     const { fullscreen, gesture } = this.state;
     return (

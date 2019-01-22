@@ -149,9 +149,15 @@ app.post('/api/generateButtons', (req, res) => {
   if (conditions.length !== 0) {
     const { targetSize, targetSpacing } = conditions[0];
     console.log(`condition: ${targetSize} ${targetSpacing}`);
-    utils.generateButtons(targetNums, targetSize, targetSpacing, btns => res.json(btns));
+    utils.generateButtons(targetNums, targetSize, targetSpacing, (target, btns) => res.json({ 
+      target,
+      buttons: btns
+    }));
   } else {
-    utils.dummyButtons(targetNums, btns => res.json(btns));
+    utils.dummyButtons(targetNums, (target, btns) => res.json({ 
+      target,
+      buttons: btns
+     }));
   }
 });
 

@@ -1,16 +1,6 @@
 import React from 'react';
 import StudyPage from './StudyPage';
 
-const separateBtnsNTarget = btns => {
-  const t = btns.shift();
-  const target = {...t};
-  target.key = 'target';
-  return {
-    target,
-    buttons: btns
-  };
-};
-
 export default class AbstractStudy extends React.Component {
   constructor(props) {
     super(props);
@@ -28,7 +18,8 @@ export default class AbstractStudy extends React.Component {
       totalTrialNum: 10,
       inputType: '',
       redirect: false,
-      visible: true
+      visible: true,
+      isFetching: false,
     };
     this.startTime = null;
     this.startTrial = this.startTrial.bind(this);
@@ -50,12 +41,12 @@ export default class AbstractStudy extends React.Component {
 
   startTrial(e) {
     const { completedNum, totalTrialNum } = this.state;
-    this.updateTargets((btns) => {
-      const { target, buttons } = separateBtnsNTarget(btns);
+    this.updateTargets((btnObj) => {
+      const { target, buttons } = btnObj;
       if (completedNum === totalTrialNum)
-        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0 });
+        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, redirect: true, completedNum: 0, isFetching: false });
       else
-        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false });
+        this.setState({ visible: false, buttons, targetButton: target, conditionDone: false, isFetching: false });
     });
   }
 
@@ -87,8 +78,8 @@ export default class AbstractStudy extends React.Component {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
       } else {
         this.updateTargets(btns => {
-          const { target, buttons } = separateBtnsNTarget(btns);
-          this.setState({ buttons, targetButton: target, completedNum, totalTrialNum });
+          const { target, buttons } = btns;
+          this.setState({ buttons, targetButton: target, completedNum, totalTrialNum, isFetching: false });
         });
       }
     })
@@ -97,6 +88,7 @@ export default class AbstractStudy extends React.Component {
 
   updateTargets(cb) {
     // const { targetNums, targetSize, targetSpacing, userId } = this.state;
+    this.setState({ isFetching: true });
     fetch('/api/generateButtons', {
       method: 'POST',
       headers: {
@@ -110,7 +102,7 @@ export default class AbstractStudy extends React.Component {
   }
 
   render() {
-    const { buttons, targetButton, visible, conditionDone, redirect, completedNum, totalTrialNum, inputType } = this.state;
+    const { buttons, targetButton, visible, conditionDone, redirect, completedNum, totalTrialNum, inputType, isFetching } = this.state;
     return (
       <StudyPage
         bgStyle={{}}
@@ -127,6 +119,7 @@ export default class AbstractStudy extends React.Component {
         inputType={inputType}
         startTrial={this.startTrial}
         updateStartTime={this.updateStartTime}
+        isFetching={isFetching}
       />
     );
   }

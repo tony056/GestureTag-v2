@@ -61,74 +61,104 @@ const generateButtons = (targetNums, targetSize, targetSpacing, cb) => {
   let num = targetNums;
   const target = createTarget(targetSize);
   const { x, y } = target;
-  const spacingTargets = [
-    {
-      x: x + targetSpacing + targetSize,
-      y,
-      w: targetSize,
-      h: targetSize,
-      id: `${x + targetSpacing + targetSize}_${y}`
-    },
-    {
-      x: x - targetSpacing - targetSize,
-      y,
-      w: targetSize,
-      h: targetSize,
-      id: `${x - targetSpacing - targetSize}_${y}`
-    },
-    {
-      x,
-      y: y - targetSpacing - targetSize,
-      w: targetSize,
-      h: targetSize,
-      id: `${x}_${y - targetSpacing - targetSize}`
-    },
-    {
-      x,
-      y: y + targetSpacing + targetSize,
-      w: targetSize,
-      h: targetSize,
-      id: `${x}_${y + targetSpacing + targetSize}`
-    }
-  ];
-  num -= 5;
+  // const spacingTargets = [
+  //   {
+  //     x: x + targetSpacing + targetSize,
+  //     y,
+  //     w: targetSize,
+  //     h: targetSize,
+  //     id: `${x + targetSpacing + targetSize}_${y}`
+  //   },
+  //   {
+  //     x: x - targetSpacing - targetSize,
+  //     y,
+  //     w: targetSize,
+  //     h: targetSize,
+  //     id: `${x - targetSpacing - targetSize}_${y}`
+  //   },
+  //   {
+  //     x,
+  //     y: y - targetSpacing - targetSize,
+  //     w: targetSize,
+  //     h: targetSize,
+  //     id: `${x}_${y - targetSpacing - targetSize}`
+  //   },
+  //   {
+  //     x,
+  //     y: y + targetSpacing + targetSize,
+  //     w: targetSize,
+  //     h: targetSize,
+  //     id: `${x}_${y + targetSpacing + targetSize}`
+  //   }
+  // ];
+  // num -= 5;
+  // const targetBlock = {
+  //   x: {
+  //     min: spacingTargets[1].x,
+  //     max: spacingTargets[0].x + targetSize
+  //   },
+  //   y: {
+  //     min: spacingTargets[2].y,
+  //     max: spacingTargets[3].y + targetSize
+  //   }
+  // };
+  num -= 1;
   const targetBlock = {
     x: {
-      min: spacingTargets[1].x,
-      max: spacingTargets[0].x + targetSize
+      min: target.x,
+      max: target.x + target.w
     },
     y: {
-      min: spacingTargets[2].y,
-      max: spacingTargets[3].y + targetSize
+      min: target.y,
+      max: target.y + target.h
     }
   };
+  const initElement = {
+    x: 0,
+    y: 0,
+    w: -1,
+    h: -1,
+    id: "",
+    row: 0,
+    col: 0
+  };
   let buttons = [];
-  buttons.push(target);
-  buttons = buttons.concat(spacingTargets);
+  for (let k = 0; k < ROW; k++) {
+    let column = [];
+    for (let j = 0; j < COLUMN; j++) {
+      column.push(Object.assign({}, initElement));
+    }
+    buttons.push(column);
+  }
+  
+  // buttons.push(target);
+  // buttons = buttons.concat(spacingTargets);
   let positions = [...Array(ROW * COLUMN).keys()];
   // shuffle
   positions = shuffle(positions);
   let i = 0;
   while (num > 0 && i < positions.length) {
     const pos = positions[i];
-    const r = Math.round(pos / COLUMN);
+    const r = Math.floor(pos / COLUMN) >= ROW ? ROW - 1 : Math.floor(pos / COLUMN);
     const c = pos % COLUMN;
     i++;
     const distractor = createDistractor(targetBlock, r , c);
     if (distractor) {
-      buttons.push(distractor);
+      const { row, col } = distractor;
+      buttons[row][col] = Object.assign({}, distractor);
       num -= 1;
     }
   }
-  cb(buttons);
+  cb(target, buttons);
 };
 
 const createTarget = targetSize => {
   const x = Math.round(Math.random() * (xRange.max - xRange.min) + xRange.min);
   const y = Math.round(Math.random() * (yRange.max - yRange.min) + yRange.min);
-
+  const col = Math.floor(x / BLOCK_WIDTH);
+  const row = Math.floor(y / BLOCK_HEIGHT);
   return {
-    x, y, w: targetSize, h: targetSize, id: `${x}_${y}`, key: 'target'
+    x, y, w: targetSize, h: targetSize, id: `${x}_${y}`, key: 'target-btn', row, col
   };
 }
 
@@ -150,7 +180,9 @@ const createDistractor = (targetBlock, row, col) => {
     y: ry,
     w: size,
     h: size,
-    id: `${rx}_${ry}`
+    id: `${rx}_${ry}`,
+    row,
+    col
   };
 };
 
