@@ -77,7 +77,7 @@ export default class StudyPage extends React.Component {
     const { overlaps } = this.state;
     if (!overlaps || overlaps.length <= index) {
       return;
-    } 
+    }
     const id = overlaps[index];
     console.log(`click id: ${id}`);
     document.getElementById(id).click();
@@ -108,10 +108,10 @@ export default class StudyPage extends React.Component {
         this.gestureClick(dir);
       });
     }
-    this.setState({ 
-      eyetrackerConnected: true, 
-      touchpadConnected: newTouchpad, 
-      inputConnected: true && newTouchpad 
+    this.setState({
+      eyetrackerConnected: true,
+      touchpadConnected: newTouchpad,
+      inputConnected: true && newTouchpad
     });
   }
 
@@ -174,7 +174,7 @@ export default class StudyPage extends React.Component {
   }
 
   checkOverlapping({ x, y, minR, maxR, minC, maxC }) {
-    
+
     const { buttons, targetButton } = this.props;
     const intersections = [];
     if (buttons.length !== 0) {
@@ -186,7 +186,7 @@ export default class StudyPage extends React.Component {
           const grid = buttons[r][c];
           if (grid.w > 0 && grid.h > 0) {
             intersections.push(grid);
-          } 
+          }
         }
       }
     }
@@ -212,7 +212,7 @@ export default class StudyPage extends React.Component {
     // });
     console.log(`intersections: ${intersections.length}`);
     if (!intersections || intersections.length === 0) {
-      this.setState({ overlaps: [] }); 
+      this.setState({ overlaps: [] });
       return;
     }
     intersections.sort((a, b) => {
@@ -221,7 +221,7 @@ export default class StudyPage extends React.Component {
       return da - db;
     });
     const final = intersections.length > 4 ? intersections.slice(0, 4) : intersections;
-    this.setState({ overlaps: final.map(btn => btn.id) }); 
+    this.setState({ overlaps: final.map(btn => btn.id) });
   }
 
   getDisplayButtons() {
@@ -238,6 +238,7 @@ export default class StudyPage extends React.Component {
             targetStyleId,
             buttonStyleId,
             targetButton,
+            buttons,
             targetSelected,
             redirect,
             updateStartTime,
@@ -246,7 +247,7 @@ export default class StudyPage extends React.Component {
     const displayButtons = this.getDisplayButtons();
     const { overlaps } = this.state;
     return (redirect ? <Redirect push to="/" /> : (
-      <div ref={this.testSocket} style={bgStyle}>
+      <div ref={this.testSocket} id="bg" style={bgStyle}>
         <Animate
           key={'target'}
           start={{ x: targetButton.x, y: targetButton.y, width: targetButton.w, height: targetButton.h }}
@@ -273,7 +274,7 @@ export default class StudyPage extends React.Component {
                 height={`${height}px`}
                 name={targetButton.id}
                 click={targetSelected}
-                arrowChild={overlaps && overlaps.indexOf(targetButton.id) >= 0 ? arrowByOrder(overlaps.indexOf(targetButton.id)) : ''}
+                arrowChild={''}
               />
           );
         }}
@@ -293,11 +294,11 @@ export default class StudyPage extends React.Component {
               height={`${h}px`}
               name={id}
               click={targetSelected}
-              arrowChild={overlaps && overlaps.indexOf(id) >= 0 ? arrowByOrder(overlaps.indexOf(id)) : ''}
+              arrowChild={''}
             />);
         }) : <p>Waiting...</p>)}
         {this.displayModal()}
-        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.testSocket} checkOverlaps={this.checkOverlapping} /> : null}
+        {inputType === InputTypes.GESTURETAG ? <GTCursor socket={this.testSocket} buttons={buttons} targetButton={targetButton} /> : null}
       </div>)
     );
   }
