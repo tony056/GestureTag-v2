@@ -11,6 +11,7 @@ export default class GTSingleConditionForm extends React.Component {
       trialNums: 10,
       inputType: 'pointing',
       userId: 'testing',
+      abilityType: ''
     };
     this.handleNumberChange = this.handleNumberChange.bind(this);
     this.handleTrialNumberChange = this.handleTrialNumberChange.bind(this);
@@ -51,11 +52,23 @@ export default class GTSingleConditionForm extends React.Component {
       labelCol: { span: 6 },
       wrapperCol: { span: 14 },
     };
-    const { userId, targetNums, targetSize, targetSpacing, inputType, trialNums } = this.state;
+    const { userId, targetNums, targetSize, targetSpacing, inputType, trialNums, abilityType, device } = this.state;
     return (
       <Form onSubmit={this.handleSubmit}>
         <Form.Item {...formItemLayout} label="User Id">
           <Input value={userId} onChange={this.handleIdChange} placeholder="Please enter the id." />
+        </Form.Item>
+        <Form.Item {...formItemLayout} label="Ability Type">
+          <Radio.Group name="abilityType" value={abilityType} onChange={this.handleRadioValueChange}>
+            <Radio value="nmi">Non-motor impairment</Radio>
+            <Radio value="mi">Motor impairment</Radio>
+          </Radio.Group>
+        </Form.Item>
+        <Form.Item {...formItemLayout} label="Device">
+          <Radio.Group name="device" value={device} onChange={this.handleRadioValueChange}>
+            <Radio value="mouse">Mouse</Radio>
+            <Radio value="touchpad">Touchpad</Radio>
+          </Radio.Group>
         </Form.Item>
         <Form.Item {...formItemLayout} label="Input Type">
           <Radio.Group name="inputType" value={inputType} onChange={this.handleRadioValueChange}>
@@ -70,18 +83,11 @@ export default class GTSingleConditionForm extends React.Component {
             <Radio value={48}>48 px</Radio>
           </Radio.Group>
         </Form.Item>
-        <Form.Item {...formItemLayout} label="Target Spacing">
-          <Radio.Group name="targetSpacing" value={targetSpacing} onChange={this.handleRadioValueChange}>
-            <Radio value={0}>0</Radio>
-            <Radio value={0.5}>0.5</Radio>
-            <Radio value={1}>1</Radio>
-          </Radio.Group>
-        </Form.Item>
         <Form.Item {...formItemLayout} label="Number of Targets">
           <InputNumber min={5} max={300} step={10} value={targetNums} onChange={this.handleNumberChange} />
         </Form.Item>
         <Form.Item {...formItemLayout} label="Number of Trials">
-          <InputNumber min={1} max={20} step={1} value={trialNums} onChange={this.handleTrialNumberChange} />
+          <InputNumber min={1} max={100} step={1} value={trialNums} onChange={this.handleTrialNumberChange} />
         </Form.Item>
         <Form.Item
           wrapperCol={{ span: 12, offset: 6 }}
