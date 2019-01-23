@@ -1,5 +1,6 @@
 import React from 'react';
 import StudyPage from './StudyPage';
+import { logClickData } from '../api/log';
 
 export default class AbstractStudy extends React.Component {
   constructor(props) {
@@ -59,20 +60,13 @@ export default class AbstractStudy extends React.Component {
     const timeStamp = Date.now();
     const targetId = this.state.targetButton.id;
     const { startTime } = this;
-    fetch('/api/log', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        timeStamp,
-        startTime,
-        targetId,
-        selectId
-      }),
-    })
-    .then(res => res.json())
-    .then(jsonRes => {
+    const data = {
+      timeStamp,
+      startTime,
+      targetId,
+      selectId
+    };
+    logClickData(data, jsonRes => {
       const { completedNum, totalTrialNum } = jsonRes;
       if (jsonRes.change) {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
@@ -82,8 +76,7 @@ export default class AbstractStudy extends React.Component {
           this.setState({ buttons, targetButton: target, completedNum, totalTrialNum, isFetching: false });
         });
       }
-    })
-    .catch(err => console.error(err));
+    });
   }
 
   updateTargets(cb) {

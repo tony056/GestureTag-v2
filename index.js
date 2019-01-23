@@ -162,8 +162,8 @@ app.post('/api/generateButtons', (req, res) => {
 });
 
 app.post('/api/log', (req, res) => {
-  const { startTime, targetId, selectId, timeStamp } = req.body;
-  const msg = `${timeStamp},\t${targetId},\t${selectId},\t${startTime}\n`;
+  // subjectId, abilityType, device, technique, trial, targetSize, #oftargets, target_density, time, error
+  const msg = logCickDataWithUserInfo(req.body, userInfo);
   fs.appendFile(userInfo.log_file_path, msg, err => {
     if (err) console.error(err);
     console.log(`log: ${timeStamp}\t${targetId}\t${selectId}\t${startTime}\n`);

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import StudyPage from './StudyPage';
+import { logClickData } from '../api/log';
 
 export default class RealApp extends Component {
   constructor(props) {
@@ -103,31 +104,23 @@ export default class RealApp extends Component {
     const timeStamp = Date.now();
     const targetId = this.state.targetButton.id;
     const { startTime } = this;
-    fetch('/api/log', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        timeStamp,
-        startTime,
-        targetId,
-        selectId
-      }),
-    })
-    .then(res => res.json())
-    .then(jsonRes => {
+    const data = {
+      timeStamp,
+      startTime,
+      targetId,
+      selectId
+    };
+    logClickData(data, jsonRes => {
       const { completedNum, totalTrialNum } = jsonRes;
       if (jsonRes.change) {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
       } else {
         this.updateTargets(btns => {
           const { target, buttons } = btns;
-          this.setState({ buttons, targetButton: target, completedNum, totalTrialNum });
+          this.setState({ buttons, targetButton: target, completedNum, totalTrialNum, isFetching: false });
         });
       }
-    })
-    .catch(err => console.error(err));
+    });
   }
 
   render() {
