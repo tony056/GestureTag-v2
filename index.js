@@ -10,6 +10,7 @@ const port = process.env.PORT || 5000;
 const utils = require('./utils/buttonGeneration');
 const uf = require('./utils/userInfo');
 const connection = require('./utils/connection');
+const LOG = require('./utils/log');
 
 let userInfo = {
   data_dir_path: '',
@@ -142,31 +143,19 @@ app.get('/api/getTarget', (req, res) => {
   }
 });
 
-app.post('/api/generateButtons', (req, res) => {
+app.get('/api/generateButtons', (req, res) => {
   console.log('get button generation request');
-  // const { userId, inputType, targetNums, targetSize, targetSpacing } = req.body;
-  const { targetNums, conditions } = userInfo;
-  if (conditions.length !== 0) {
-    const { targetSize, targetSpacing } = conditions[0];
-    console.log(`condition: ${targetSize} ${targetSpacing}`);
-    utils.generateButtons(targetNums, targetSize, targetSpacing, (target, btns) => res.json({ 
-      target,
-      buttons: btns
-    }));
-  } else {
-    utils.dummyButtons(targetNums, (target, btns) => res.json({ 
-      target,
-      buttons: btns
-     }));
-  }
+  const { targetNums, targetSize } = userInfo;
+  utils.generateButtons(targetNums, targetSize, (target, btns) => res.json({ target, buttons: btns }));
 });
 
 app.post('/api/log', (req, res) => {
-  const { startTime, targetId, selectId, timeStamp } = req.body;
-  const msg = `${timeStamp},\t${targetId},\t${selectId},\t${startTime}\n`;
+  // subjectId, abilityType, device, technique, trial, targetSize, #oftargets, target_density, time, error
+  const prefix = userInfo.completedNum === 0 ? LOG.logDataEntry() : '';
+  const msg = prefix + LOG.logClickWithUserInfo(req.body, userInfo);
   fs.appendFile(userInfo.log_file_path, msg, err => {
     if (err) console.error(err);
-    console.log(`log: ${timeStamp}\t${targetId}\t${selectId}\t${startTime}\n`);
+    console.log(`${msg}`);
     updateTrialNums((changeCondition, completedNum, totalTrialNum) => {
       res.json({
         change: changeCondition,
@@ -203,21 +192,13 @@ app.post('/api/study/multiple', (req, res) => {
 
 app.post('/api/study/single', (req, res) => {
   console.log('get new single study request');
-  const { userId, inputType, targetNums, targetSize, targetSpacing, trialNums } = req.body;
+  const { userId, inputType } = req.body;
   const time = new Date(Date.now()).toLocaleString();
   const dirPath = `${__dirname}/study/${userId}`;
   const fpath = `${dirPath}/info_${inputType}_single_abstract.json`;
-  // const logPath = `${dirPath}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
-  const data = {
-    userId,
-    inputType,
-    trialNums,
-    targetNums,
-    conditions: [{ targetSize, targetSpacing: targetSpacing * targetSize }],
-    time,
-  };
+  const data = Object.assign({}, req.body);
   userInfo = uf.initUserInfoWithData(data, __dirname);
-  createUserDir(dirPath, fpath, data, res);
+  createUserDir(dirPath, fpath, Object.assign({time}, data), res);
 });
 
 app.post('/api/study/realistic', (req, res) => {

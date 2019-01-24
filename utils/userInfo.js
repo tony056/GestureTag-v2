@@ -2,18 +2,21 @@ const fs = require('fs');
 
 
 const createNewLogFilePath = userInfo => {
-  const { data_dir_path, userId, inputType, conditions } = userInfo;
-  const { targetSize, targetSpacing } = conditions[0];
-  return `${data_dir_path}/${userId}_${inputType}_${targetSize}x${targetSpacing}.log`;
+  const { data_dir_path, userId, inputType } = userInfo;
+  const now = new Date();
+  const time = `${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
+  return `${data_dir_path}/${userId}_${inputType}_${time}.csv`;
 };
 
 const initUserInfo = () => {
   let newUserInfo = {
     userId: '',
     inputType: '',
+    device: '',
+    abilityType: '',
     trialNums: 0,
-    targetNums: 5,
-    conditions: [],
+    targetNums: [5, 5],
+    targetSize: [16, 16],
     completedNum: 0,
     totalTrialNum: 0,
     log_file_path: '',
@@ -32,18 +35,11 @@ const updateUserInfoCondition = userInfo => {
   return newUserInfo;
 };
 
-const initUserInfoWithData = ({ userId, inputType, trialNums, targetNums, conditions }, dir_root) => {
-  let newUserInfo = {
-    userId,
-    inputType,
-    trialNums,
-    targetNums,
-    conditions,
-    completedNum: 0,
-    totalTrialNum: conditions.length * trialNums,
-    log_file_path: '',
-    data_dir_path: `${dir_root}/study/${userId}`
-  };
+const initUserInfoWithData = (data, dir_root) => {
+  let newUserInfo = { ...data };
+  newUserInfo.completedNum = 0;
+  newUserInfo.totalTrialNum = data.trialNums;
+  newUserInfo.data_dir_path = `${dir_root}/study/${data.userId}`;
   newUserInfo.log_file_path = createNewLogFilePath(newUserInfo);
   return newUserInfo;
 };

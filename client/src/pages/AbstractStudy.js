@@ -1,5 +1,6 @@
 import React from 'react';
 import StudyPage from './StudyPage';
+import { logClickData } from '../api/log';
 
 export default class AbstractStudy extends React.Component {
   constructor(props) {
@@ -59,20 +60,17 @@ export default class AbstractStudy extends React.Component {
     const timeStamp = Date.now();
     const targetId = this.state.targetButton.id;
     const { startTime } = this;
-    fetch('/api/log', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        timeStamp,
-        startTime,
-        targetId,
-        selectId
-      }),
-    })
-    .then(res => res.json())
-    .then(jsonRes => {
+    const { targetButton, buttons } = this.state;
+    const data = {
+      timeStamp,
+      startTime,
+      targetId,
+      selectId, 
+      targetButton,
+      buttons,
+      areaOfWindow: window.innerWidth * window.innerHeight, 
+    };
+    logClickData(data, true, jsonRes => {
       const { completedNum, totalTrialNum } = jsonRes;
       if (jsonRes.change) {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
@@ -82,20 +80,13 @@ export default class AbstractStudy extends React.Component {
           this.setState({ buttons, targetButton: target, completedNum, totalTrialNum, isFetching: false });
         });
       }
-    })
-    .catch(err => console.error(err));
+    });
   }
 
   updateTargets(cb) {
     // const { targetNums, targetSize, targetSpacing, userId } = this.state;
     this.setState({ isFetching: true });
-    fetch('/api/generateButtons', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: ''
-    })
+    fetch('/api/generateButtons')
     .then(res => res.json())
     .then(jsonObj => cb(jsonObj))
     .catch(err => console.error(err));
