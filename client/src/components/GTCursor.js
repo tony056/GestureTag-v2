@@ -104,20 +104,21 @@ export default class GTCursor extends React.Component {
 
   checkOverlapping({ x, y, minR, maxR, minC, maxC, l1, r1 }) {
     const { buttons, targetButton } = this.props;
-    const intersections = [];
-    if (buttons.length !== 0) {
-      for (let r = minR; r < maxR + 1; r++) {
-        for (let c = minC; c < maxC + 1; c++) {
-          if (r >= 15 || r < 0 || c < 0 || c >= 24) {
-            continue;
-          }
-          const grid = buttons[r][c];
-          if (grid.w > 0 && grid.h > 0) {
-            intersections.push(grid);
-          }
-        }
-      }
-    }
+    const intersections = buttons.slice(0);
+    
+    // if (buttons.length !== 0) {
+    //   for (let r = minR; r < maxR + 1; r++) {
+    //     for (let c = minC; c < maxC + 1; c++) {
+    //       if (r >= 15 || r < 0 || c < 0 || c >= 24) {
+    //         continue;
+    //       }
+    //       const grid = buttons[r][c];
+    //       if (grid.w > 0 && grid.h > 0) {
+    //         intersections.push(grid);
+    //       }
+    //     }
+    //   }
+    // }
     if ((targetButton.row >= minR && targetButton.row <= maxR) && (targetButton.col >= minC && targetButton.col <= maxC)) {
       intersections.push(targetButton);
     }

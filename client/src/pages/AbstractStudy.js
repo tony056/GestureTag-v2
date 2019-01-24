@@ -60,13 +60,17 @@ export default class AbstractStudy extends React.Component {
     const timeStamp = Date.now();
     const targetId = this.state.targetButton.id;
     const { startTime } = this;
+    const { targetButton, buttons } = this.state;
     const data = {
       timeStamp,
       startTime,
       targetId,
-      selectId
+      selectId, 
+      targetButton,
+      buttons,
+      areaOfWindow: window.innerWidth * window.innerHeight, 
     };
-    logClickData(data, jsonRes => {
+    logClickData(data, true, jsonRes => {
       const { completedNum, totalTrialNum } = jsonRes;
       if (jsonRes.change) {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });
@@ -82,13 +86,7 @@ export default class AbstractStudy extends React.Component {
   updateTargets(cb) {
     // const { targetNums, targetSize, targetSpacing, userId } = this.state;
     this.setState({ isFetching: true });
-    fetch('/api/generateButtons', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: ''
-    })
+    fetch('/api/generateButtons')
     .then(res => res.json())
     .then(jsonObj => cb(jsonObj))
     .catch(err => console.error(err));

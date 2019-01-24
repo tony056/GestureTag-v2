@@ -7,12 +7,12 @@ export default class GTSingleConditionForm extends React.Component {
     super(props);
     this.state = {
       targetSize: [16, 16],
-      targetSpacing: 0,
       targetNums: [5, 5],
       trialNums: 10,
       inputType: 'pointing',
       userId: 'testing',
-      abilityType: '',
+      abilityType: 'nmi',
+      device: 'mouse'
     };
     this.handleNumberChange = this.handleNumberChange.bind(this);
     this.handleTrialNumberChange = this.handleTrialNumberChange.bind(this);
@@ -21,6 +21,7 @@ export default class GTSingleConditionForm extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleMinChange = this.handleMinChange.bind(this);
     this.handleMaxChange = this.handleMaxChange.bind(this);
+    this.handleFixChange = this.handleFixChange.bind(this);
   }
 
   handleNumberChange(value) {
@@ -61,7 +62,6 @@ export default class GTSingleConditionForm extends React.Component {
   }
 
   handleMaxChange(name, value) {
-    console.log(`max: ${name}`);
     if (name === 'targetSize') {
       const { targetSize } = this.state;
       this.setState({ targetSize: [targetSize[0], value] });
@@ -71,12 +71,20 @@ export default class GTSingleConditionForm extends React.Component {
     }
   }
 
+  handleFixChange(name, value) {
+    if (name === 'targetSize') {
+      this.setState({ targetSize: [value, value] });
+    } else if (name === 'targetNums') {
+      this.setState({ targetNums: [value, value] });
+    }
+  }
+
   render() {
     const formItemLayout = {
       labelCol: { span: 6 },
       wrapperCol: { span: 14 },
     };
-    const { userId, targetNums, targetSize, targetSpacing, inputType, trialNums, abilityType, device } = this.state;
+    const { userId, targetNums, targetSize, inputType, trialNums, abilityType, device } = this.state;
     return (
       <Form onSubmit={this.handleSubmit}>
         <Form.Item {...formItemLayout} label="User Id">
@@ -108,6 +116,7 @@ export default class GTSingleConditionForm extends React.Component {
             name="targetSize"
             minChange={this.handleMinChange}
             maxChange={this.handleMaxChange}
+            fixChange={this.handleFixChange}
           />
         </Form.Item>
         <Form.Item {...formItemLayout} label="Number of Targets">
@@ -118,6 +127,7 @@ export default class GTSingleConditionForm extends React.Component {
             name="targetNums"
             minChange={this.handleMinChange}
             maxChange={this.handleMaxChange}
+            fixChange={this.handleFixChange}
           />
         </Form.Item>
         <Form.Item {...formItemLayout} label="Number of Trials">

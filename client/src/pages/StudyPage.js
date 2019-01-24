@@ -157,7 +157,8 @@ export default class StudyPage extends React.Component {
     for (let i = 0; i < buttons.length; i++) {
       displayButtons = displayButtons.concat(buttons[i]);
     }
-    return displayButtons;
+    return buttons;
+    // return displayButtons;
   }
 
   render() {

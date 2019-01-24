@@ -11,6 +11,7 @@ export default class GTNumberSelect extends React.Component {
     this.displayRangeSelect = this.displayRangeSelect.bind(this);
     this.handleMinChange = this.handleMinChange.bind(this);
     this.handleMaxChange = this.handleMaxChange.bind(this);
+    this.handleFixChange = this.handleFixChange.bind(this);
     this.toggleChange = this.toggleChange.bind(this);
   }
 
@@ -28,8 +29,13 @@ export default class GTNumberSelect extends React.Component {
     maxChange(name, value);
   }
 
+  handleFixChange(value) {
+    const { fixChange, name } = this.props;
+    fixChange(name, value);
+  }
+
   displayRangeSelect() {
-    const { min, max, values, minChange, maxChange } = this.props;
+    const { min, max, values } = this.props;
     return (
       <div>
         <Row gutter={8}>
@@ -48,13 +54,13 @@ export default class GTNumberSelect extends React.Component {
 
   render() {
     const { isFixed } = this.state;
-    const { min, max, values, minChange } = this.props;
+    const { min, max, values } = this.props;
     return (
       <div>
         <Switch checkedChildren="Fixed" unCheckedChildren="Range" checked={isFixed} onChange={this.toggleChange} />
         <br />
         {isFixed ?
-          <InputNumber min={min} max={max} value={values[0]} onChange={this.handleMinChange} />
+          <InputNumber min={min} max={max} value={values[0]} onChange={this.handleFixChange} />
         : this.displayRangeSelect()}
       </div>
     );
