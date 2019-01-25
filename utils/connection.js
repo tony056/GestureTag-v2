@@ -46,7 +46,10 @@ const registerEyemovedChannel = (client, cb) => {
 }
 
 const registerTouchgestureChannel = (client, cb) => {
-  client.on('gesture', cb);
+  client.on('gesture', (data, callback) => {
+    cb(data);
+    callback();
+  });
 };
 
 const broadcastTouchpadConnected = io => {

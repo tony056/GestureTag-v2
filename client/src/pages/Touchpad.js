@@ -4,14 +4,18 @@ import { Button } from 'antd';
 import { touchGestureDetector } from '../api/gesture';
 import '../Touchpad.css';
 import { initConnection } from '../api/socket-client';
+import GTTouchPoint from '../components/GTTouchPoint';
 
 export default class Touchpad extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       fullscreen: false,
-      gesture: ''
+      gesture: 0,
+      x: 0,
+      y: 0
     };
+    this.isEmitting = false;
     this.touchManager = null;
     this.socket = null;
     this.handleClick = this.handleClick.bind(this);
@@ -20,12 +24,12 @@ export default class Touchpad extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener('resize', this.handleResizeEvent);
+    window.addEventListener('fullscreenchange', this.handleResizeEvent);
     this.touchManager = new Hammer.Manager(document.getElementById('touchpad'));
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResizeEvent);
+    window.removeEventListener('fullscreenchange', this.handleResizeEvent);
   }
 
   handleClick() {
@@ -52,27 +56,34 @@ export default class Touchpad extends React.Component {
     if (this.touchManager) {
       this.touchManager.add(customizedPan);
       this.touchManager.on('panend', (e) => {
+        if (this.isEmitting) return;
+        this.isEmitting = true;
         const dir = touchGestureDetector(e);
         // emit direction through socket
-        this.socket.emit('gesture', dir);
-        this.setState({ gesture: dir });
+        this.socket.emit('gesture', dir, () => {
+          this.isEmitting = false;
+        });
+      });
+      this.touchManager.on('hammer.input', (e) => {
+        // console.log(e.pointers,join('-'));
+        const { x, y } = e.center;
+        this.setState({ x, y });
       });
     }
   }
 
   handleResizeEvent() {
-    const { fullscreen } = this.state;
-    const next = (window.innerWidth === window.screen.width) && (window.innerHeight === window.screen.height);
-    if (next !== fullscreen) {
-      this.setState({ fullscreen: next });
+    if (document.webkitIsFullScreen || document.fullscreen) {
+      this.setState({ fullscreen: true });
     }
   }
 
   render () {
-    const { fullscreen, gesture } = this.state;
+    const { fullscreen, x, y, gesture } = this.state;
     return (
       <div id="touchpad">
-        {fullscreen ? <p>{gesture}</p> : <Button type="primary" onClick={this.handleClick}>Connect</Button>}
+        <div style={{ color: 'white' }}>{gesture}</div>
+        {fullscreen ? <GTTouchPoint x={x} y={y} /> : <Button type="primary" onClick={this.handleClick}>Connect</Button>}
       </div>
     );
   }
