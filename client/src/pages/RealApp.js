@@ -64,7 +64,7 @@ export default class RealApp extends Component {
   }
 
   componentDidMount() {
-    const { item, inputType, trialNums, userId } = this.props.location.state;
+    const { item, inputType, trialNums, userId, device, abilityType } = this.props.location.state;
     this.getButtonsFromServer(item.xml_source);
     fetch('/api/study/realistic', {
       method: 'POST',
@@ -75,6 +75,8 @@ export default class RealApp extends Component {
         userId,
         trialNums,
         inputType,
+        device,
+        abilityType,
         app: item.name
       })
     }).then(res => res.json())
@@ -104,13 +106,17 @@ export default class RealApp extends Component {
     const timeStamp = Date.now();
     const targetId = this.state.targetButton.id;
     const { startTime } = this;
+    const { targetButton, buttons } = this.state;
     const data = {
       timeStamp,
       startTime,
       targetId,
-      selectId
+      selectId,
+      targetButton,
+      buttons,
+      areaOfWindow: window.innerWidth * window.innerHeight, 
     };
-    logClickData(data, jsonRes => {
+    logClickData(data, false, jsonRes => {
       const { completedNum, totalTrialNum } = jsonRes;
       if (jsonRes.change) {
         this.setState({ visible: true, conditionDone: true, completedNum, totalTrialNum });

@@ -5,7 +5,7 @@ const WIDTH = 1920;
 const HEIGHT = 1200;
 const BLOCK_WIDTH = 80;
 const BLOCK_HEIGHT = 80;
-const targetOptions = [16, 32, 48];
+const TARGET_RANGE = [8, 32];
 const xRange = {
   min: EYE_TRACKING_WIDTH_ERROR_THRESHOLD,
   max: WIDTH - 300
@@ -39,10 +39,10 @@ const convertBtnLabelsToButtons = (jsonObj) => {
   return Targets.Target.map((btn, i) => {
     const { X, Y, Width, Height, Name } = btn;
     return {
-      x: X,
-      y: Y,
-      w: Width,
-      h: Height,
+      x: parseInt(X),
+      y: parseInt(Y),
+      w: parseInt(Width),
+      h: parseInt(Height),
       id: Name
     };
   });
@@ -62,17 +62,19 @@ const generateButtons = (targetNums, targetSize, cb) => {
   const [minTargetSize, maxTargetSize] = targetSize;
   let num = (minTargetNum === maxTargetNum) ? minTargetNum :Math.floor(Math.random() * (maxTargetNum - minTargetNum + 1) + minTargetNum);
   const size = (minTargetSize === maxTargetSize) ? minTargetSize : Math.floor(Math.random() * (maxTargetSize - minTargetSize + 1) + minTargetSize);
-
   const target = createTarget(size);
   num -= 1;
+  const hw = Math.round(target.w / 2);
+  const hh = Math.round(target.h / 2);
+  
   const targetBlock = {
-    x: {
-      min: target.x,
-      max: target.x + target.w
+    l: {
+      x: target.x - hw - 2,
+      y: target.y - hh - 2 
     },
-    y: {
-      min: target.y,
-      max: target.y + target.h
+    r: {
+      x: target.x + hw + 2,
+      y: target.y + hh + 2
     }
   };
   const initElement = {
@@ -101,8 +103,8 @@ const generateButtons = (targetNums, targetSize, cb) => {
     const pos = positions[i];
     const r = Math.floor(pos / COLUMN) >= ROW ? ROW - 1 : Math.floor(pos / COLUMN);
     const c = pos % COLUMN;
-    i++;
     const distractor = createDistractor(targetBlock, r , c);
+    i++;
     if (distractor) {
       const { row, col } = distractor;
       // buttons[row][col] = Object.assign({}, distractor);
@@ -112,101 +114,6 @@ const generateButtons = (targetNums, targetSize, cb) => {
   }
   cb(target, buttons);
 };
-
-// const generateButtons = (targetNums, targetSize, targetSpacing, cb) => {
-//   let num = targetNums;
-//   const target = createTarget(targetSize);
-//   const { x, y } = target;
-//   // const spacingTargets = [
-//   //   {
-//   //     x: x + targetSpacing + targetSize,
-//   //     y,
-//   //     w: targetSize,
-//   //     h: targetSize,
-//   //     id: `${x + targetSpacing + targetSize}_${y}`
-//   //   },
-//   //   {
-//   //     x: x - targetSpacing - targetSize,
-//   //     y,
-//   //     w: targetSize,
-//   //     h: targetSize,
-//   //     id: `${x - targetSpacing - targetSize}_${y}`
-//   //   },
-//   //   {
-//   //     x,
-//   //     y: y - targetSpacing - targetSize,
-//   //     w: targetSize,
-//   //     h: targetSize,
-//   //     id: `${x}_${y - targetSpacing - targetSize}`
-//   //   },
-//   //   {
-//   //     x,
-//   //     y: y + targetSpacing + targetSize,
-//   //     w: targetSize,
-//   //     h: targetSize,
-//   //     id: `${x}_${y + targetSpacing + targetSize}`
-//   //   }
-//   // ];
-//   // num -= 5;
-//   // const targetBlock = {
-//   //   x: {
-//   //     min: spacingTargets[1].x,
-//   //     max: spacingTargets[0].x + targetSize
-//   //   },
-//   //   y: {
-//   //     min: spacingTargets[2].y,
-//   //     max: spacingTargets[3].y + targetSize
-//   //   }
-//   // };
-//   num -= 1;
-//   const targetBlock = {
-//     x: {
-//       min: target.x,
-//       max: target.x + target.w
-//     },
-//     y: {
-//       min: target.y,
-//       max: target.y + target.h
-//     }
-//   };
-//   const initElement = {
-//     x: 0,
-//     y: 0,
-//     w: -1,
-//     h: -1,
-//     id: "",
-//     row: 0,
-//     col: 0
-//   };
-//   let buttons = [];
-//   for (let k = 0; k < ROW; k++) {
-//     let column = [];
-//     for (let j = 0; j < COLUMN; j++) {
-//       column.push(Object.assign({}, initElement));
-//     }
-//     buttons.push(column);
-//   }
-  
-//   // buttons.push(target);
-//   // buttons = buttons.concat(spacingTargets);
-//   let positions = [...Array(ROW * COLUMN).keys()];
-//   // shuffle
-//   positions = shuffle(positions);
-//   let i = 0;
-//   while (num > 0 && i < positions.length) {
-//     const pos = positions[i];
-//     const r = Math.floor(pos / COLUMN) >= ROW ? ROW - 1 : Math.floor(pos / COLUMN);
-//     const c = pos % COLUMN;
-//     i++;
-//     const distractor = createDistractor(targetBlock, r , c);
-//     if (distractor) {
-//       const { row, col } = distractor;
-//       buttons[row][col] = Object.assign({}, distractor);
-//       num -= 1;
-//     }
-//   }
-//   cb(target, buttons);
-// };
 
 const createTarget = targetSize => {
   const x = Math.round(Math.random() * (xRange.max - xRange.min) + xRange.min);
@@ -227,10 +134,21 @@ const createDistractor = (targetBlock, row, col) => {
   const margin = Math.round(size / 2);
   const rx = generateRandomPos(x1 + margin, x2 - size);
   const ry = generateRandomPos(y1 + margin, y2 - size);
-  const yInRange = (ry >= targetBlock.y.min && ry <= targetBlock.y.max) || (ry + size >= targetBlock.y.min && ry + size <= targetBlock.y.max);
-  const xInRange = (rx >= targetBlock.x.min && rx <= targetBlock.x.max) || (rx + size >= targetBlock.x.min && rx + size <= targetBlock.x.max);
-  if (yInRange && xInRange)
+  const rect1 = {
+    l: {
+      x: rx - margin,
+      y: ry - margin
+    },
+    r: {
+      x: rx + margin,
+      y: ry + margin 
+    }
+  };
+  
+  if (doOverlap(rect1, targetBlock)) {
     return null;
+  }
+
   return {
     x: rx,
     y: ry,
@@ -247,8 +165,17 @@ const generateRandomPos = (a1, a2) => {
 };
 
 const randomPickSize = () => {
-  const index = Math.round(Math.random() * (2 - 0) + 0);
-  return targetOptions[index];
+  return Math.round(Math.random() * (TARGET_RANGE[1] - TARGET_RANGE[0]) + TARGET_RANGE[0] + 1);
+};
+
+const doOverlap = (rect1, rect2) => {
+  if (rect1.l.x > rect2.r.x || rect2.l.x > rect1.r.x) {
+    return false;
+  } 
+  if (rect1.l.y > rect2.r.y || rect2.l.y > rect1.r.y) {
+    return false;
+  }
+  return true;
 };
 
 const shuffle = positions => {

@@ -4,7 +4,7 @@ const fs = require('fs');
 const createNewLogFilePath = userInfo => {
   const { data_dir_path, userId, inputType } = userInfo;
   const now = new Date();
-  const time = `${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
+  const time = `${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
   return `${data_dir_path}/${userId}_${inputType}_${time}.csv`;
 };
 
@@ -50,7 +50,9 @@ const initUserInfoWithRealisticApp = (data, dir_root) => {
   newUserInfo.totalTrialNum = data.trialNums;
   newUserInfo.data_dir_path = `${dir_root}/study/${data.userId}`;
   const { data_dir_path, userId, inputType, app } = newUserInfo;
-  newUserInfo.log_file_path = `${data_dir_path}/${userId}_${app}_${inputType}.log`;
+  const now = new Date();
+  const time = `${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
+  newUserInfo.log_file_path = `${data_dir_path}/${userId}_${app}_${inputType}_${time}.csv`;
   return newUserInfo;
 }
 

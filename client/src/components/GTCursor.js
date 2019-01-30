@@ -18,7 +18,6 @@ const basicStyle = {
 };
 
 const arrowStyle = {
-  borderRadius: '50%',
   width: `${arrowSize}px`,
   height: `${arrowSize}px`,
   zIndex: 102,
@@ -105,7 +104,7 @@ export default class GTCursor extends React.Component {
   checkOverlapping({ x, y, minR, maxR, minC, maxC, l1, r1 }) {
     const { buttons, targetButton } = this.props;
     const intersections = buttons.slice(0);
-    
+    intersections.push(targetButton);
     // if (buttons.length !== 0) {
     //   for (let r = minR; r < maxR + 1; r++) {
     //     for (let c = minC; c < maxC + 1; c++) {
@@ -119,9 +118,9 @@ export default class GTCursor extends React.Component {
     //     }
     //   }
     // }
-    if ((targetButton.row >= minR && targetButton.row <= maxR) && (targetButton.col >= minC && targetButton.col <= maxC)) {
-      intersections.push(targetButton);
-    }
+    // if ((targetButton.row >= minR && targetButton.row <= maxR) && (targetButton.col >= minC && targetButton.col <= maxC)) {
+    //   intersections.push(targetButton);
+    // }
     const filtered = intersections.filter((btn, i) => {
       const l2 = { x: btn.x, y: btn.y };
       const r2 = { x: btn.x + btn.w, y: btn.y + btn.h };

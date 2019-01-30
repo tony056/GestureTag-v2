@@ -207,13 +207,7 @@ app.post('/api/study/realistic', (req, res) => {
   const time = new Date(Date.now()).toLocaleString();
   const dirPath = `${__dirname}/study/${userId}`;
   const fpath = `${dirPath}/info_${inputType}_${app}.json`;
-  const data = {
-    userId,
-    inputType,
-    trialNums,
-    time,
-    app
-  };
+  const data = Object.assign({ time }, req.body);
   // init user info state
   userInfo = uf.initUserInfoWithRealisticApp(data, __dirname);
   createUserDir(dirPath, fpath, data, res);

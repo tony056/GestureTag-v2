@@ -7,7 +7,9 @@ export default class GTInfoModal extends React.Component {
     super(props);
     this.state = {
       userId: '',
-      inputType: '',
+      inputType: 'pointing',
+      abilityType: 'nmi',
+      device: 'mouse',
       trialNums: 0
     };
     this.handleCancel = this.handleCancel.bind(this);
@@ -30,7 +32,14 @@ export default class GTInfoModal extends React.Component {
   }
 
   handleRadioValueChange(e) {
-    this.setState({ inputType: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'abilityType') {
+      this.setState({ abilityType: value });
+    } else if (name === 'inputType') {
+      this.setState({ inputType: value });
+    } else if (name === 'device') {
+      this.setState({ device: value });
+    }
   }
 
   handleTrialNumberChange(value) {
@@ -44,7 +53,7 @@ export default class GTInfoModal extends React.Component {
   }
 
   render() {
-    const { userId, trialNums, inputType } = this.state;
+    const { userId, trialNums, inputType, abilityType, device } = this.state;
     const formItemLayout = {
       labelCol: { span: 6 },
       wrapperCol: { span: 14 },
@@ -67,6 +76,18 @@ export default class GTInfoModal extends React.Component {
         <Form>
           <Form.Item {...formItemLayout} label="User Id">
             <Input value={userId} onChange={this.handleIdChange} placeholder="Please enter the id." />
+          </Form.Item>
+          <Form.Item {...formItemLayout} label="Ability Type">
+            <Radio.Group name="abilityType" value={abilityType} onChange={this.handleRadioValueChange}>
+              <Radio value="nmi">Non-motor impairment</Radio>
+              <Radio value="mi">Motor impairment</Radio>
+            </Radio.Group>
+          </Form.Item>
+          <Form.Item {...formItemLayout} label="Device">
+            <Radio.Group name="device" value={device} onChange={this.handleRadioValueChange}>
+              <Radio value="mouse">Mouse</Radio>
+              <Radio value="touchpad">Touchpad</Radio>
+            </Radio.Group>
           </Form.Item>
           <Form.Item {...formItemLayout} label="Input Type">
             <Radio.Group name="inputType" value={inputType} onChange={this.handleRadioValueChange}>
